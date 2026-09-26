@@ -38,3 +38,6 @@ next-env.d.ts
 
 # Database migrations
 /db/migrations/
+
+# Private local demo fixtures
+/data/draftkings/

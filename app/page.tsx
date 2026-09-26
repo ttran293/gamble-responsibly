@@ -37,6 +37,7 @@ export default function StillwaterApp() {
       <header className="nav">
         <button className="brand" onClick={() => setView("home")}><span>◒</span> stillwater</button>
         <nav>
+          <a href="/demo">Explore demo metrics</a>
           <button onClick={() => go("friend")}>For someone you care about</button>
           <button className="nav-cta" onClick={() => go("tracker")}>My private tracker <span>→</span></button>
         </nav>
