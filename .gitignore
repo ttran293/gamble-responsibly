@@ -35,3 +35,6 @@ next-env.d.ts
 # Project-local files not intended for source control
 /GAMBLING_HARM_AWARENESS_APP.md
 /skill/
+
+# Database migrations
+/db/migrations/

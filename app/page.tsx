@@ -20,6 +20,14 @@ export default function StillwaterApp() {
   const [message, setMessage] = useState("");
 
   const go = (target: "friend" | "tracker") => {
+    if (target === "friend") {
+      window.location.href = "/supporter";
+      return;
+    }
+    if (target === "tracker") {
+      window.location.href = "/start";
+      return;
+    }
     setView(target);
     setPauseOpen(false);
   };

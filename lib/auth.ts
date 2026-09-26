@@ -1,0 +1,40 @@
+import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { betterAuth } from "better-auth";
+import { magicLink } from "better-auth/plugins";
+import { nextCookies } from "better-auth/next-js";
+import { Resend } from "resend";
+import { db } from "./db";
+import * as schema from "../db/schema";
+
+const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export const auth = betterAuth({
+  baseURL: appUrl,
+  trustedOrigins: [appUrl],
+  database: drizzleAdapter(db, { provider: "pg", schema }),
+  emailAndPassword: { enabled: true },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      void resend.emails.send({
+        from: process.env.EMAIL_FROM ?? "Stillwater <onboarding@resend.dev>", to: user.email,
+        subject: "Verify your Stillwater email", html: `<p>Verify your email to help protect your private Stillwater account.</p><p><a href="${url}">Verify my email</a></p>`
+      });
+    }
+  },
+  plugins: [
+    magicLink({
+      expiresIn: 10 * 60,
+      storeToken: "hashed",
+      sendMagicLink: async ({ email, url }) => {
+        await resend.emails.send({
+          from: process.env.EMAIL_FROM ?? "Stillwater <onboarding@resend.dev>",
+          to: email,
+          subject: "Your private Stillwater sign-in link",
+          html: `<p>Use this secure link to sign in to your private Stillwater space:</p><p><a href="${url}">Continue to Stillwater</a></p><p>This link expires in 10 minutes.</p>`
+        });
+      }
+    }),
+    nextCookies()
+  ]
+});
