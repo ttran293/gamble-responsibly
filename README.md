@@ -1,6 +1,6 @@
-# Stillwater
+# Jelly
 
-Stillwater is a gambling-harm awareness prototype for tracking betting habits and spending. It also lets someone concerned about a friend or family member invite them to use the app.
+Jelly is a gambling-harm awareness prototype for tracking betting habits and spending. It also lets someone concerned about a friend or family member invite them to use the app.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ Stillwater is a gambling-harm awareness prototype for tracking betting habits an
    RESEND_API_KEY=re_your_key
    APP_URL=http://localhost:3000
    BETTER_AUTH_SECRET=replace-with-a-long-random-secret
-   EMAIL_FROM=Stillwater <onboarding@resend.dev>
+   EMAIL_FROM=Jelly <onboarding@resend.dev>
    ```
 
 3. Start the development server:
@@ -56,7 +56,7 @@ The schema includes support contacts, invitations, user profiles and onboarding 
 For local testing, use:
 
 ```env
-EMAIL_FROM=Stillwater <onboarding@resend.dev>
+EMAIL_FROM=Jelly <onboarding@resend.dev>
 ```
 
 Resend's shared test sender is intended for test deliveries. Use `delivered@resend.dev` as the recipient when testing the invitation email flow.
@@ -64,7 +64,7 @@ Resend's shared test sender is intended for test deliveries. Use `delivered@rese
 To send invitations and verification messages to real email addresses, add and verify a domain in Resend, then update the sender:
 
 ```env
-EMAIL_FROM=Stillwater <hello@your-domain.com>
+EMAIL_FROM=Jelly <hello@your-domain.com>
 ```
 
 ## Checks

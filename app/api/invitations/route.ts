@@ -34,8 +34,8 @@ export async function POST(request: Request) {
     const email = await resend.emails.send({
       from: emailFrom,
       to: recipientEmail,
-      subject: `${senderName} invited you to use Stillwater`,
-      html: `<p>${senderName} invited you to use Stillwater to track your betting habits and spending.</p><p>Joining is your choice. They cannot see your activity or finances.</p><p><a href="${inviteUrl}">Open invitation</a></p><p>This invitation expires in 72 hours.</p>`
+      subject: `${senderName} invited you to use Jelly`,
+      html: `<p>${senderName} invited you to use Jelly to track your betting habits and spending.</p><p>Joining is your choice. They cannot see your activity or finances.</p><p><a href="${inviteUrl}">Open invitation</a></p><p>This invitation expires in 72 hours.</p>`
     });
     if (email.error) throw new Error(email.error.message);
     await db.execute(sql`update invitations set resend_message_id = ${email.data?.id ?? null} where id = ${invitation.rows[0].id}`);

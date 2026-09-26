@@ -34,6 +34,6 @@ export function TakeABreak({ providers }: { providers: Provider[] }) {
         <p>{tool.help}</p><a href={tool.url} target="_blank" rel="noopener noreferrer">View {tools[provider].name} setup help ↗</a>
       </div>)}
     </article>)}</div>
-    <article className="break-device"><div className="break-tool-heading"><h3>BetBlocker · Device blocking</h3><span className="break-status">Demo: Not set up</span></div><p>A separate device tool for blocking gambling sites and apps. It is not an account setting in DraftKings or FanDuel. Install and configure it on the devices you use; Stillwater cannot read its status. Opening this link does not activate blocking.</p><a href="https://betblocker.org/" target="_blank" rel="noopener noreferrer">View BetBlocker setup and help ↗</a></article>
+    <article className="break-device"><div className="break-tool-heading"><h3>BetBlocker · Device blocking</h3><span className="break-status">Demo: Not set up</span></div><p>A separate device tool for blocking gambling sites and apps. It is not an account setting in DraftKings or FanDuel. Install and configure it on the devices you use; Jelly cannot read its status. Opening this link does not activate blocking.</p><a href="https://betblocker.org/" target="_blank" rel="noopener noreferrer">View BetBlocker setup and help ↗</a></article>
   </details>;
 }

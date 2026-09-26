@@ -21,7 +21,7 @@ export default async function OnboardingPage() {
   const stored = await pool.query("SELECT revisions FROM guardrail_state WHERE user_id=$1", [session.user.id]);
   const goalLocked = Boolean(stored.rows[0]?.revisions?.length);
   return <main className="onboarding-shell">
-    <header className="onboarding-header"><span className="brand"><span>◒</span> stillwater</span><span>Betting and spending tracker</span></header>
+    <header className="onboarding-header"><span className="brand"><span>◒</span> Jelly</span><span>Betting and spending tracker</span></header>
     <OnboardingForm initialAnswers={parsed.success ? parsed.data : null} editing={Boolean(profile?.completedAt)} goalLocked={goalLocked} />
   </main>;
 }

@@ -38,7 +38,7 @@ export function PersonalSummary({ answers, emailVerified }: { answers: Onboardin
   const target = goalTarget(answers);
 
   return <section className="personal-summary" aria-label="Your onboarding choices">
-    {!emailVerified && <div className="verification-banner"><div><strong>Protect this space</strong><br />Check your email to verify your account. You can keep using Stillwater now.</div></div>}
+    {!emailVerified && <div className="verification-banner"><div><strong>Protect this space</strong><br />Check your email to verify your account. You can keep using Jelly now.</div></div>}
     <div className="personal-summary-header"><div><span className="eyebrow">Based on your answers</span><h2>Your starting point</h2></div><button className="urge-button" onClick={() => setPauseOpen(true)}><span className="urge-dot"></span>I feel like gambling <b>→</b></button></div>
     <div className="dashboard-personal-grid">
       <article className="panel personal-card"><span className="eyebrow">Your direction</span><h2>{labelFor(goalOptions, answers.goal)}</h2><p>{goalDetails[answers.goal]}</p>{target && <p className="personal-target">{target}</p>}<Link className="text-link" href="/guardrails">Set goal and guardrails →</Link></article>

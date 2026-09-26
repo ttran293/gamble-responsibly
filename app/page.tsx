@@ -15,7 +15,7 @@ function Icon({ children }: { children: React.ReactNode }) {
   return <span className="icon" aria-hidden="true">{children}</span>;
 }
 
-export default function StillwaterApp() {
+export default function JellyApp() {
   const [view, setView] = useState<"home" | "friend" | "tracker">("home");
   const [pauseOpen, setPauseOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -36,9 +36,9 @@ export default function StillwaterApp() {
   return (
     <main>
       <header className="nav">
-        <button className="brand" onClick={() => setView("home")}><span>◒</span> stillwater</button>
+        <button className="brand" onClick={() => setView("home")}><img src="/jelly-logo.gif?v=2" alt="" />Jelly</button>
         <nav>
-          <Link href="/demo">Explore demo metrics</Link>
+          <Link href="/supporter">Send invitation</Link>
           <Link className="nav-cta" href="/sign-in">Log In</Link>
         </nav>
       </header>
@@ -55,15 +55,29 @@ export default function StillwaterApp() {
 type Path = "friend" | "tracker";
 
 const friendSteps = [
-  { n: "01", title: "Say what you've noticed", body: "Choose a calm moment. Lead with what you have seen and how you feel, rather than a demand." },
-  { n: "02", title: "Offer a betting tracker", body: "They can record betting activity, wins, and losses. Their data stays theirs." },
-  { n: "03", title: "Send an invitation", body: "They receive a private link and decide whether to join. You will not see their activity or spending.", href: "/supporter", action: "Send invitation" }
+  { n: "01", title: "You've noticed a problem", body: "Someone you care about is struggling with gambling, and you want to help." },
+  { n: "02", title: "Invite them to track a goal", body: "They can follow their habit and a goal to gamble less, or stop. Joining is their choice." },
+  { n: "03", title: "Be there when it gets hard", body: "If they add you as an emergency contact, Jelly lets you know when a streak of not betting breaks, or when they want to bet and want to reach out.", href: "/supporter", action: "Send invitation" }
 ];
 
 const trackerSteps = [
-  { n: "01", title: "Open a private space", body: "Your tracker is only for you. No one else can see what you record." },
-  { n: "02", title: "Record what happened", body: "Log activity, wins, losses, and money spent. Over time, you can see what changed." },
+  { n: "01", title: "Track your habit", body: "Record what you do, so the pattern is clear." },
+  { n: "02", title: "Set a goal", body: "Choose to gamble less, or stop. Jelly helps you work toward it." },
   { n: "03", title: "Create an account", body: "Start with a name, email, and password. You can begin right away.", href: "/start", action: "Create account" }
+];
+
+const faqs = [
+  { q: "Who is Jelly for?", a: "Someone who wants to track their own habit and reach a goal to gamble less, or stop. And someone who wants to help a person they care about do the same." },
+  { q: "What do I track?", a: "Your gambling habit, and a goal to gamble less or stop. Jelly helps you work toward that goal." },
+  { q: "What if I invite someone I care about?", a: "They decide whether to join and set their own goal. If they add you as an emergency contact, Jelly notifies you when a streak of not betting breaks, or when they want to bet and want to reach out." },
+  { q: "What does an emergency contact see?", a: "Only those notices. You do not see their habit record, spending, or goal details unless they choose to share them." },
+  { q: "Can I use Jelly without an emergency contact?", a: "Yes. Tracking your own habit and goal does not require anyone else. You can add a contact later if you want someone notified when you are struggling." }
+];
+
+const resources = [
+  { title: "NCPG Help by State", body: "Gambling-specific support and treatment. A starting point for therapists, programs, and local resources.", href: "https://www.ncpgambling.org/help-treatment/help-by-state/", action: "Find help in your state" },
+  { title: "Gamblers Anonymous", body: "In-person and online peer groups, including virtual and telephone meetings.", href: "https://gamblersanonymous.org/find-a-meeting/", action: "Find a meeting" },
+  { title: "Gam-Anon", body: "Meetings for friends and family affected by someone else's gambling.", href: "https://gam-anon.org/meeting-directory", action: "Find a family meeting" }
 ];
 
 function choosePath(event: React.KeyboardEvent, next: Path, setPath: (path: Path) => void) {
@@ -78,36 +92,82 @@ function Home() {
 
   return <>
     <section className="hero">
-      <div className="eyebrow">A clearer view of your betting habits</div>
-      <h1>Understand your betting,<br />one day at a time.</h1>
-      <p>Track activity, wins, losses, and spending. Notice patterns and decide what to do next, or invite someone you care about to try it for themselves.</p>
-    </section>
-    <section className="paths" aria-label="Choose your path">
-      <div role="button" tabIndex={0} className={`path-card friend-card${path === "friend" ? " is-selected" : ""}`} aria-pressed={path === "friend"} onClick={() => setPath("friend")} onKeyDown={(event) => choosePath(event, "friend", setPath)}>
-        <div className="path-icon">♡</div><div><h2>I&apos;m concerned about someone</h2><p className="path-lead">Invite them to track their habits and spending.</p><p>Share Stillwater with someone you care about. They can record their betting activity, wins, and losses. Their data stays theirs.</p></div>
-      </div>
-      <div role="button" tabIndex={0} className={`path-card tracker-card${path === "tracker" ? " is-selected" : ""}`} aria-pressed={path === "tracker"} onClick={() => setPath("tracker")} onKeyDown={(event) => choosePath(event, "tracker", setPath)}>
-        <div className="path-icon">◌</div><div><h2>I want to understand my gambling habit</h2><p className="path-lead">Track your habits and spending.</p><p>Record your betting activity, wins, losses, and money spent in one place. See how your habits change over time.</p></div>
+      <h1>Work toward gambling less.</h1>
+      <p>Track your own habit, or invite someone you care about and be there if they struggle.</p>
+      <div className="egg">
+        <p><b>Jelly</b> <i>(n.)</i></p>
+        <ol>
+          <li>A frozen state.</li>
+          <li>The little wobble before you bounce back.</li>
+        </ol>
       </div>
     </section>
-    <section className="how" aria-labelledby="how-heading">
-      <h2 id="how-heading">How it works</h2>
-      <p className="how-context">{path === "friend" ? "For someone you care about" : "For your own tracker"}</p>
-      <div className="how-grid">
-        {steps.map((step) => step.href ? (
-          <Link className="how-card how-action" href={step.href} key={step.n}>
-            <span>{step.n}</span>
-            <h3>{step.title}</h3>
-            <p>{step.body}</p>
-            <span className="link">{step.action} →</span>
-          </Link>
-        ) : (
-          <article className="how-card" key={step.n}>
-            <span>{step.n}</span>
-            <h3>{step.title}</h3>
-            <p>{step.body}</p>
-          </article>
+    <section className="choice">
+      <div className="paths-band" aria-label="Choose your path">
+        <div className="paths">
+        <div role="button" tabIndex={0} className={`path-card friend-card${path === "friend" ? " is-selected" : ""}`} aria-pressed={path === "friend"} onClick={() => setPath("friend")} onKeyDown={(event) => choosePath(event, "friend", setPath)}>
+          <div className="path-icon">♡</div><div><h2>I&apos;m concerned about someone</h2><p className="path-lead">Help them gamble less, or stop.</p><p>Invite them to track that goal. If they add you, Jelly notifies you when they are struggling.</p></div>
+        </div>
+        <div role="button" tabIndex={0} className={`path-card tracker-card${path === "tracker" ? " is-selected" : ""}`} aria-pressed={path === "tracker"} onClick={() => setPath("tracker")} onKeyDown={(event) => choosePath(event, "tracker", setPath)}>
+          <div className="path-icon">◌</div><div><h2>I want to understand my gambling habit</h2><p className="path-lead">Track your habit. Reach a goal.</p><p>Jelly helps you gamble less, or stop.</p></div>
+        </div>
+        </div>
+      </div>
+      <div className="how" aria-labelledby="how-heading">
+        <div className="band-inner">
+        <h2 id="how-heading">How it works</h2>
+        <p className="how-context">{path === "friend" ? "If you want to help someone you care about" : "If you want to reach your own goal"}</p>
+        <div className="how-grid">
+          {steps.map((step) => step.href ? (
+            <Link className="how-card how-action" href={step.href} key={step.n}>
+              <span>{step.n}</span>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+              <span className="link">{step.action} →</span>
+            </Link>
+          ) : (
+            <article className="how-card" key={step.n}>
+              <span>{step.n}</span>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+            </article>
+          ))}
+        </div>
+        </div>
+      </div>
+    </section>
+    <section className="faq" aria-labelledby="faq-heading">
+      <div className="band-inner">
+      <h2 id="faq-heading">FAQ</h2>
+      <div className="faq-list">
+        {faqs.map((item) => (
+          <details className="faq-item" key={item.q}>
+            <summary>{item.q}</summary>
+            <p>{item.a}</p>
+          </details>
         ))}
+      </div>
+      </div>
+    </section>
+    <section className="resources" aria-labelledby="resources-heading">
+      <div className="band-inner">
+      <h2 id="resources-heading">Resources</h2>
+      <p className="how-context">Gambling-specific support and treatment, peer groups, therapists and programs, help for friends and family, debt, and blocking tools.</p>
+      <div className="urgent-help">
+        <span>Need help now</span>
+        <a href="tel:18006973738">Call or text 1-800-MY-RESET</a>
+        <p>The National Problem Gambling Helpline. You can also <a href="https://www.1800myreset.org" target="_blank" rel="noopener noreferrer">chat online</a>.</p>
+      </div>
+      <div className="resource-list">
+        {resources.map((item) => (
+          <a className="resource-card" href={item.href} key={item.title} target="_blank" rel="noopener noreferrer">
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+            <span className="link">{item.action} →</span>
+          </a>
+        ))}
+      </div>
+      <p className="resource-note">For gambling-related debt, or for blocking and self-exclusion, call or text the helpline and ask to be connected in your state.</p>
       </div>
     </section>
     <p className="privacy-note"><Icon>⌁</Icon> Your information is private. No one can see or connect your data without your clear permission.</p>
@@ -123,7 +183,7 @@ function Friend({ onTracker }: { onTracker: () => void }) {
       <article className="guide-card"><span>02</span><h2>Protect what you share</h2><p>Get practical guidance on shared bills, accounts, and boundaries. You cannot access their financial data without consent.</p><a href="#finances">Explore financial safeguards →</a></article>
       <article className="guide-card"><span>03</span><h2>Find support for you</h2><p>Supporting someone can be exhausting. Connect with services and peers who understand what this can feel like.</p><a href="#support">Find support options →</a></article>
     </div>
-    <div className="invite"><div><span className="eyebrow">An invitation</span><h2>They can track their habits and spending.</h2><p>They decide whether to use Stillwater, and their information remains theirs.</p></div><button className="primary" onClick={onTracker}>See the betting tracker <span>→</span></button></div>
+    <div className="invite"><div><span className="eyebrow">An invitation</span><h2>They can track their habits and spending.</h2><p>They decide whether to use Jelly, and their information remains theirs.</p></div><button className="primary" onClick={onTracker}>See the betting tracker <span>→</span></button></div>
   </section>;
 }
 

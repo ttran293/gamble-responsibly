@@ -3,7 +3,7 @@ import "./refresh.css";
 import "./onboarding.css";
 
 export const metadata = {
-  title: "Stillwater | Track betting habits and spending",
+  title: "Jelly",
   description: "Track betting activity, spending, wins, and losses in one place."
 };
 

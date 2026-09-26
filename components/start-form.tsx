@@ -10,7 +10,7 @@ export function StartForm() {
   const [status, setStatus] = useState("");
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setStatus("Creating your private account…");
-    const { error } = await authClient.signUp.email({ name: name || "Stillwater member", email, password, callbackURL: "/dashboard" });
+    const { error } = await authClient.signUp.email({ name: name || "Jelly member", email, password, callbackURL: "/dashboard" });
     if (error) { setStatus(error.message ?? "We could not create that account."); return; }
     void authClient.sendVerificationEmail({ email, callbackURL: "/dashboard" });
     window.location.assign("/dashboard");

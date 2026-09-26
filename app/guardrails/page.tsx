@@ -13,5 +13,5 @@ export default async function GuardrailsPage(){
  const answers=profile.onboardingAnswers;
  const goal=answers?.goal;
  const pause=answers?.pauseAction==="custom"?answers.customPauseAction??"":answers?.pauseAction?labelFor(pauseActionOptions,answers.pauseAction):"";
- return <><div className="private-nav"><a className="brand" href="/">◒ stillwater</a><a href="/dashboard">My dashboard</a></div><main className="private-dashboard metrics-dashboard"><Guardrails initialGoal={goal==="reduce"||goal==="stop"?goal:"stay"} initialStopDate={answers?.stopDate} initialPausePlan={pause}/></main></>;
+ return <><div className="private-nav"><a className="brand" href="/">◒ Jelly</a><a href="/dashboard">My dashboard</a></div><main className="private-dashboard metrics-dashboard"><Guardrails initialGoal={goal==="reduce"||goal==="stop"?goal:"stay"} initialStopDate={answers?.stopDate} initialPausePlan={pause}/></main></>;
 }

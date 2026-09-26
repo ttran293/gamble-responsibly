@@ -19,7 +19,7 @@ export function PrivateDashboard({ name, snapshot, demo = false, answers, emailV
   const hasInvalidLimit = [deposit,stake,days].some(s => s !== "" && (!Number.isFinite(Number(s)) || Number(s) < 0)) || (days !== "" && !Number.isInteger(Number(days)));
   function lastDays(n: number) { const end = snapshot.through.slice(0,10); setTo(end); setFrom([snapshot.from,shiftDay(end,1-n)].sort().at(-1)!); }
   return <>
-    <div className="private-nav"><a href="/" className="brand"><span>◒</span> stillwater</a><div className="private-nav-right"><span className="private-label">{demo ? "Demo preview" : "Betting tracker"}</span>{demo && <a href="/sign-in">Sign in</a>}</div></div>
+    <div className="private-nav"><a href="/" className="brand"><span>◒</span> Jelly</a><div className="private-nav-right"><span className="private-label">{demo ? "Demo preview" : "Betting tracker"}</span>{demo && <a href="/sign-in">Sign in</a>}</div></div>
     <main className="private-dashboard metrics-dashboard">
       <section className="welcome-row"><div><p className="eyebrow">Awareness, at your pace</p><h1>{demo ? "Make room for a different habit." : `Hi, ${name}.`}</h1><p className="intro">Understand the money and attention going into gambling. Choose what you want to change.</p></div></section>
       {!demo && answers && <PersonalSummary answers={answers} emailVerified={emailVerified} />}

@@ -15,7 +15,7 @@ TIMESCALE_SERVICE_URL=postgres://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=requir
 APP_URL=http://localhost:3000
 BETTER_AUTH_SECRET=REPLACE_WITH_A_RANDOM_SECRET
 RESEND_API_KEY=REPLACE_WITH_YOUR_RESEND_KEY
-EMAIL_FROM=Stillwater <hello@your-verified-domain.example>
+EMAIL_FROM=Jelly <hello@your-verified-domain.example>
 ```
 
 Replace the placeholders with your own configuration. `.env` is ignored by Git. Apply the SQL files in `db/migrations/` in numeric order before using authentication or onboarding. Existing databases need `0002_onboarding.sql` for saved onboarding answers and `0003_guardrails.sql` for saved plans and notices.

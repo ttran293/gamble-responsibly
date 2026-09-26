@@ -17,8 +17,8 @@ export const auth = betterAuth({
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       void resend.emails.send({
-        from: process.env.EMAIL_FROM ?? "Stillwater <onboarding@resend.dev>", to: user.email,
-        subject: "Verify your Stillwater email", html: `<p>Verify your email to help protect your private Stillwater account.</p><p><a href="${url}">Verify my email</a></p>`
+        from: process.env.EMAIL_FROM ?? "Jelly <onboarding@resend.dev>", to: user.email,
+        subject: "Verify your Jelly email", html: `<p>Verify your email to help protect your private Jelly account.</p><p><a href="${url}">Verify my email</a></p>`
       });
     }
   },
@@ -28,10 +28,10 @@ export const auth = betterAuth({
       storeToken: "hashed",
       sendMagicLink: async ({ email, url }) => {
         await resend.emails.send({
-          from: process.env.EMAIL_FROM ?? "Stillwater <onboarding@resend.dev>",
+          from: process.env.EMAIL_FROM ?? "Jelly <onboarding@resend.dev>",
           to: email,
-          subject: "Your private Stillwater sign-in link",
-          html: `<p>Use this secure link to sign in to your private Stillwater space:</p><p><a href="${url}">Continue to Stillwater</a></p><p>This link expires in 10 minutes.</p>`
+          subject: "Your private Jelly sign-in link",
+          html: `<p>Use this secure link to sign in to your private Jelly space:</p><p><a href="${url}">Continue to Jelly</a></p><p>This link expires in 10 minutes.</p>`
         });
       }
     }),
