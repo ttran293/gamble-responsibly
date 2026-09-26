@@ -48,3 +48,52 @@ test('a bet settling in a later period contributes result then, while its stake 
  const settlement=summarize(s,'2026-08-02','2026-08-02');assert.equal(settlement.betCount,0);assert.equal(settlement.averageStake,null);assert.equal(settlement.settledResult,800);assert.equal(settlement.cashBettingFlow,1800);assert.equal(settlement.openCount,0);
  const empty=summarize(s,'2026-08-03','2026-08-03');assert.equal(empty.closing,1800);assert.equal(empty.daysWithoutBets,1);assert.equal(empty.longestBreak,1);
 });
+
+test('FanDuel split entries, statements and promotions reconcile without duplicated money', async()=>{
+ const s=await loadFixture('fanduel'); const m=summarize(s,s.from,s.through.slice(0,10));
+ assert.equal(s.bets.length,72);assert.equal(s.transactions.length,134);assert.equal(new Set(s.transactions.map(t=>t.id)).size,134);
+ assert.deepEqual(s.supplemental,{promotions:13,statements:2});
+ assert.equal(m.deposits,41000);assert.equal(m.withdrawals,13000);assert.equal(m.cashWagered,122400);assert.equal(m.bonusWagered,9500);
+ assert.equal(m.closing,9487);assert.equal(m.cashBettingFlow,-18513);assert.equal(m.settledResult,-13613);assert.equal(m.openCashStake,4900);
+ assert.equal(m.opening+m.netDeposits+m.cashBettingFlow,m.closing);
+});
+test('all accounts aggregates balances, unique betting days and namespaced IDs',async()=>{
+ const {combineSnapshots}=require('../lib/metrics/core.ts');
+ const dk=await loadFixture(),fd=await loadFixture('fanduel');const all=combineSnapshots([dk,fd]);
+ const m=summarize(all,all.from,all.through.slice(0,10));
+ assert.equal(m.betCount,160);assert.equal(all.transactions.length,274);assert.equal(m.deposits,66000);assert.equal(m.closing,73082);assert.equal(m.settledResult,37182);
+ assert.equal(m.activeDays,new Set(all.bets.map(b=>b.placedAt.slice(0,10))).size);
+ assert.equal(m.completeCoverage,false);assert.equal(m.comparison,null);
+ assert.equal(new Set(all.transactions.map(t=>t.id)).size,274);
+ assert.equal(fd.transactions.at(-1).balance,9487); // Combining never mutates source balances.
+ assert.throws(()=>combineSnapshots([dk,dk]));assert.throws(()=>combineSnapshots([]));
+ for(const date of [...new Set(all.transactions.map(t=>t.at.slice(0,10)))]) {
+  const a=summarize(all,date,date);assert.equal(a.opening+a.netDeposits+a.cashBettingFlow,a.closing);
+ }
+ const shared=summarize(all,'2026-08-10','2026-08-19');assert.equal(shared.completeCoverage,true);
+ const single=combineSnapshots([fd]);assert.equal(summarize(single,single.from,single.through.slice(0,10)).closing,9487);
+});
+test('FanDuel rejects altered statement totals and missing transaction parts',()=>{
+ const {validateFanDuel}=require('../lib/metrics/fixture.ts');
+ const read=kind=>parseCsv(fs.readFileSync(`data/fanduel/fanduel_connected_${kind}.csv`,'utf8'));
+ const b=read('bets'),t=read('transactions'),p=read('promotions'),s=read('activity_statements');
+ assert.doesNotThrow(()=>validateFanDuel(b,t,p,s));
+ const changed=s.map(r=>({...r}));changed[0].deposited_minor='1';assert.throws(()=>validateFanDuel(b,t,p,changed));
+ const split=t.find(r=>r.entry_parts==='2');assert.ok(split);
+ assert.throws(()=>validateFanDuel(b,t.filter(r=>r.entry_id!==split.entry_id),p,s));
+});
+
+test('fictional Moonharbor normalizes offset dates and reconciles standalone and combined totals',async()=>{
+ const {combineSnapshots}=require('../lib/metrics/core.ts');
+ const mh=await loadFixture('moonharbor'),m=summarize(mh,mh.from,mh.through.slice(0,10));
+ assert.equal(mh.bets.length,22);assert.equal(mh.transactions.length,32);
+ assert.equal(mh.bets[0].placedAt,'2026-08-01T22:12:00.000Z');
+ assert.equal(mh.through,'2026-08-20T03:00:00.000Z');
+ assert.equal(m.deposits,57000);assert.equal(m.withdrawals,3000);assert.equal(m.cashWagered,60300);assert.equal(m.payouts,16036);assert.equal(m.settledResult,-44264);assert.equal(m.closing,9736);assert.equal(m.bonusWagered,0);
+ const all=combineSnapshots(await Promise.all(['draftkings','fanduel','moonharbor'].map(p=>loadFixture(p))));
+ const combined=summarize(all,all.from,all.through.slice(0,10));
+ assert.equal(combined.betCount,182);assert.equal(all.transactions.length,306);assert.equal(combined.closing,82818);
+ assert.equal(combined.opening+combined.netDeposits+combined.cashBettingFlow,combined.closing);
+ assert.equal(new Set(all.transactions.map(t=>t.id)).size,306);
+ assert.equal((await loadFixture('moonharbor')).transactions.length,32);
+});

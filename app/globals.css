@@ -42,3 +42,44 @@
 .metrics-dashboard .activity-row { gap:18px; }
 .metrics-dashboard .activity-row b small { display:block; font-size:12px; font-weight:400; }
 @media(max-width:700px) { .connection-card { align-items:start; flex-direction:column; } .guardrail-fields { grid-template-columns:1fr; } .metrics-dashboard .activity-row { flex-wrap:wrap; } .metrics-dashboard .panel { padding:20px; } .daily-bars { gap:2px; } }
+
+.account-manager { margin:24px 0; padding:28px; }
+.account-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin:24px 0; }
+.account-card { border:1px solid #cbd7cd; border-radius:14px; padding:24px; background:#f7f9f5; }
+.account-card small { display:block; margin:8px 0; color:#516356; line-height:1.5; }
+.account-status { font-weight:600; }
+.account-actions { display:flex; flex-wrap:wrap; gap:14px; margin-top:20px; align-items:center; }
+.account-actions button:disabled { opacity:.55; cursor:wait; }
+.failure-toggle { display:flex; align-items:center; gap:10px; margin:20px 0; }
+.account-toolbar { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; margin:20px 0; }
+.account-toolbar select { margin-left:12px; padding:10px; border:1px solid #bac8bd; border-radius:8px; background:white; }
+@media(max-width:700px) { .account-cards { grid-template-columns:1fr; } .account-manager { padding:18px; } }
+
+.saved-guardrails { margin:24px 0; }
+.saved-guardrails fieldset { border:1px solid #d0d9cf; border-radius:12px; margin:24px 0; padding:22px; }
+.saved-guardrails legend { font-weight:600; padding:0 8px; }
+.saved-guardrails label { display:flex; flex-direction:column; gap:8px; margin:10px 0; }
+.saved-guardrails input:not([type=checkbox]), .saved-guardrails select, .saved-guardrails textarea { padding:10px; border:1px solid #b5c5b7; border-radius:8px; font:inherit; background:#fff; max-width:100%; }
+.saved-guardrails textarea { min-height:90px; }
+.saved-guardrails .guardrail-check,.guardrail-day-options label { flex-direction:row; align-items:center; }
+.guardrail-day-options { display:flex; flex-wrap:wrap; gap:18px; }
+.guardrail-progress { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; margin:20px 0; }
+.guardrail-progress article,.notice-item,.stop-plan,.demo-clock { padding:18px; border:1px solid #d5ded3; border-radius:10px; margin:12px 0; background:#f5f7f1; }
+.saved-guardrails details { margin:20px 0; }
+.saved-guardrails small { color:#536457; }
+.saved-guardrails p { line-height:1.65; }
+.saved-guardrails button { margin:8px 12px 8px 0; }
+.scope-limits { border-bottom:1px solid #d5ded3; padding-bottom:16px; }
+
+.take-a-break { margin:24px 0; }
+.take-a-break > summary { font-size:24px; font-weight:600; cursor:pointer; }
+.break-demo-note { padding:14px 18px; background:#f0f3eb; border-radius:10px; line-height:1.6; }
+.break-provider-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-top:24px; }
+.break-provider { border:1px solid #d0d9cf; border-radius:12px; padding:20px; }
+.break-tool { border-top:1px solid #dce3d9; padding:18px 0; }
+.break-tool-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.break-tool-heading h3,.break-tool-heading h4 { margin:0; }
+.break-status { font-size:12px; border:1px solid #c2cec1; border-radius:20px; padding:5px 10px; white-space:nowrap; }
+.break-tool p,.break-device p { line-height:1.6; font-size:14px; }
+.break-device { border-top:1px solid #d0d9cf; margin-top:24px; padding-top:24px; }
+@media(max-width:700px) { .break-provider-grid { grid-template-columns:1fr; } }

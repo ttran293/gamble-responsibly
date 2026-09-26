@@ -18,26 +18,27 @@ export function parseCsv(text: string): Record<string, string>[] {
   if (!header || new Set(header).size !== header.length) throw new Error("Missing or duplicate CSV headers.");
   return rows.map((r, i) => { if (r.length !== header.length) throw new Error(`CSV row ${i + 2} has the wrong number of fields.`); return Object.fromEntries(header.map((h, j) => [h, r[j]])); });
 }
-function money(r: Record<string,string>, key: string) {
+export function money(r: Record<string,string>, key: string) {
   if (!/^-?\d+$/.test(r[key] ?? "") || !Number.isSafeInteger(Number(r[key]))) throw new Error(`Invalid integer cents: ${key}`);
   return Number(r[key]);
 }
-function timestamp(s: string) { if (!s || !/(Z|[+-]\d\d:\d\d)$/.test(s) || !Number.isFinite(Date.parse(s))) throw new Error("Invalid timestamp."); return new Date(s).toISOString(); }
-function checkRows(rows: Record<string,string>[], id: string) {
+export function timestamp(s: string) { if (!s || !/(Z|[+-]\d\d:\d\d)$/.test(s) || !Number.isFinite(Date.parse(s))) throw new Error("Invalid timestamp."); return new Date(s).toISOString(); }
+function checkRows(rows: Record<string,string>[], id: string, provider: Provider) {
   if (!rows.length) throw new Error("The demo fixture is empty.");
   const ids = new Set<string>();
   for (const r of rows) {
     if (!r[id] || ids.has(r[id])) throw new Error("Missing or duplicate source ID.");
     ids.add(r[id]);
-    if (r.data_mode !== "demo" || r.source !== "SYNTHETIC" || r.provider !== "draftkings" || r.currency !== "USD" || r.account_id !== "sim_account_001" || r.connection_id !== "sim_connection_001") throw new Error("Only the supplied synthetic USD demo account can be loaded here.");
+    if (r.data_mode !== "demo" || r.source !== "SYNTHETIC" || r.provider !== (provider === "moonharbor" ? "moonharbor_demo" : provider) || r.currency !== "USD" || r.account_id !== (provider === "draftkings" ? "sim_account_001" : provider === "moonharbor" ? "sim_mh_account_001" : "sim_fd_account_001") || r.connection_id !== (provider === "draftkings" ? "sim_connection_001" : provider === "moonharbor" ? "sim_mh_connection_001" : "sim_fd_connection_001")) throw new Error("Only the supplied synthetic USD demo account can be loaded here.");
   }
 }
-export async function loadFixture(): Promise<Snapshot> {
-  const root = path.join(process.cwd(), "data", "draftkings");
-  const [b, t] = await Promise.all(["bets", "transactions"].map(async kind => parseCsv(await readFile(path.join(root, `draftkings_connected_${kind}.csv`), "utf8"))));
-  checkRows(b, "bet_id"); checkRows(t, "transaction_id");
-  const bets: Bet[] = b.map(r => ({ id: r.bet_id, placedAt: timestamp(r.placed_at), settledAt: r.settled_at ? timestamp(r.settled_at) : null, status: r.status, stake: money(r,"stake_minor"), cashStake: money(r,"cash_stake_minor"), bonusStake: money(r,"bonus_stake_minor"), payout: money(r,"payout_minor"), refund: money(r,"refund_minor"), wagerId: r.wager_transaction_id }));
-  const transactions: Transaction[] = t.map(r => ({ id: r.transaction_id, at: timestamp(r.timestamp), type: r.type, cash: money(r,"amount_minor"), bonus: money(r,"bonus_amount_minor"), balance: money(r,"balance_after_minor"), bonusBalance: money(r,"bonus_balance_after_minor"), betId: r.bet_id, description: r.description })).sort((a,b) => a.at.localeCompare(b.at));
+export type Provider = "draftkings" | "fanduel" | "moonharbor";
+export async function loadFixture(provider: Provider = "draftkings"): Promise<Snapshot> {
+  const root = path.join(process.cwd(), "data", provider);
+  const [b, t] = await Promise.all(["bets", "transactions"].map(async kind => parseCsv(await readFile(path.join(root, `${provider}_connected_${kind}.csv`), "utf8"))));
+  checkRows(b, "bet_id", provider); checkRows(t, provider === "fanduel" ? "entry_id" : "transaction_id", provider);
+  const bets: Bet[] = b.map(r => ({ id: r.bet_id, placedAt: timestamp(r.placed_at), settledAt: r.settled_at ? timestamp(r.settled_at) : null, status: r.status, stake: money(r,"stake_minor"), cashStake: money(r,"cash_stake_minor"), bonusStake: money(r,"bonus_stake_minor"), payout: money(r,"payout_minor"), refund: money(r,"refund_minor"), wagerId: provider === "fanduel" ? r.wager_entry_id : r.wager_transaction_id }));
+  const transactions: Transaction[] = t.map(r => ({ id: provider === "fanduel" ? r.entry_id : r.transaction_id, provider: provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings", at: timestamp(r.timestamp), type: r.type, cash: money(r,"amount_minor"), bonus: provider === "moonharbor" ? 0 : money(r,"bonus_amount_minor"), balance: money(r,"balance_after_minor"), bonusBalance: provider === "moonharbor" ? 0 : money(r,"bonus_balance_after_minor"), betId: r.bet_id, description: r.description })).sort((a,b) => a.at.localeCompare(b.at));
   const byId = new Map(transactions.map(t => [t.id,t]));
   const used = new Set<string>();
   for (const bet of bets) {
@@ -48,7 +49,7 @@ export async function loadFixture(): Promise<Snapshot> {
     used.add(wager.id);
   }
   let cash = 0, bonus = 0;
-  const types = ["deposit","withdrawal","wager","bonus_wager","payout","refund","bonus_award"];
+  const types = ["deposit","withdrawal","wager","bonus_wager","payout","refund","bonus_award","token_award","token_used","token_expired"];
   for (const tx of transactions) {
     if (!types.includes(tx.type)) throw new Error("Unknown transaction type.");
     cash += tx.cash; bonus += tx.bonus;
@@ -57,5 +58,67 @@ export async function loadFixture(): Promise<Snapshot> {
   for (const key of ["payout","refund"] as const) {
     if (bets.reduce((n,b) => n+b[key],0) !== transactions.filter(t => t.type === key).reduce((n,t) => n+t.cash,0)) throw new Error("Settlement totals do not reconcile.");
   }
-  return { bets, transactions, loadedAt: new Date().toISOString(), from: transactions[0].at.slice(0,10), through: transactions.at(-1)!.at, provider: "DraftKings", mode: "demo" };
+  let supplemental: Snapshot["supplemental"];
+  if (provider === "fanduel") {
+    const promotions = parseCsv(await readFile(path.join(root, "fanduel_connected_promotions.csv"), "utf8"));
+    const statements = parseCsv(await readFile(path.join(root, "fanduel_connected_activity_statements.csv"), "utf8"));
+    checkRows(promotions, "promotion_id", provider); checkRows(statements, "statement_id", provider);
+    validateFanDuel(b, t, promotions, statements);
+    supplemental = { promotions: promotions.length, statements: statements.length };
+  }
+  return { supplemental, bets, transactions, loadedAt: new Date().toISOString(), from: transactions[0].at.slice(0,10), through: transactions.at(-1)!.at, provider: provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings", mode: "demo" };
+}
+
+export function validateFanDuel(bets: Record<string,string>[], rows: Record<string,string>[], promotions: Record<string,string>[], statements: Record<string,string>[]) {
+  const total = (rs: Record<string,string>[], key: string) => rs.reduce((n,r)=>n+money(r,key),0);
+  const equal = (a: number,b: number,label: string) => { if(a!==b) throw new Error(`FanDuel ${label} does not reconcile.`); };
+  const entries = new Map(rows.map(r=>[r.entry_id,r]));
+  const groups = new Map<string,Record<string,string>[]>();
+  let tokens = 0;
+  for (const r of rows) {
+    tokens += money(r,"token_quantity_change"); equal(tokens,money(r,"token_count_after"),"token balance");
+    if(tokens<0) throw new Error("Negative token balance.");
+    equal(money(r,"cash_balance_after_minor"),money(r,"balance_after_minor"),"cash balance");
+    equal(money(r,"playable_balance_after_minor")+money(r,"non_playable_balance_after_minor"),money(r,"cash_balance_after_minor")+money(r,"bonus_balance_after_minor"),"wallet balance");
+    groups.set(r.transaction_id,[...(groups.get(r.transaction_id)??[]),r]);
+  }
+  for(const rs of groups.values()) {
+    const parts=rs.map(r=>money(r,"entry_part")).sort((a,b)=>a-b);
+    if(rs.some(r=>money(r,"entry_parts")!==rs.length) || parts.some((n,i)=>n!==i+1)) throw new Error("Incomplete FanDuel transaction parts.");
+  }
+  for (const b of bets) {
+    const w=entries.get(b.wager_entry_id);
+    if(w?.transaction_id!==b.wager_transaction_id) throw new Error("FanDuel wager reference mismatch.");
+  }
+  for (const p of promotions) {
+    timestamp(p.awarded_at); if(p.expires_at) timestamp(p.expires_at);
+    const related=rows.filter(r=>r.promotion_id===p.promotion_id);
+    for(const key of ["award_entry_id","used_entry_id","expiry_entry_id"]) {
+      if(p[key] && entries.get(p[key])?.promotion_id!==p.promotion_id) throw new Error("Invalid promotion entry link.");
+    }
+    const type=(name:string)=>related.filter(r=>r.type===name);
+    equal(total(type("bonus_award"),"bonus_amount_minor"),money(p,"amount_awarded_minor"),"promotion award");
+    equal(-total(type("bonus_wager"),"bonus_amount_minor"),money(p,"amount_played_minor"),"promotion usage");
+    equal(total(type("token_award"),"token_quantity_change"),money(p,"quantity_awarded"),"tokens awarded");
+    equal(-total(type("token_used"),"token_quantity_change"),money(p,"quantity_used"),"tokens used");
+    equal(-total(type("token_expired"),"token_quantity_change"),money(p,"quantity_expired"),"tokens expired");
+    equal(money(p,"amount_expired_minor"),0,"bonus expiry");
+  }
+  for(const s of statements) {
+    const start=timestamp(s.period_start), end=timestamp(s.period_end_exclusive);
+    const period=rows.filter(r=>r.timestamp>=start&&r.timestamp<end);
+    const placed=bets.filter(b=>b.placed_at>=start&&b.placed_at<end);
+    const type=(name:string)=>period.filter(r=>r.type===name);
+    const before=rows.filter(r=>r.timestamp<start).at(-1);
+    const last=rows.filter(r=>r.timestamp<end).at(-1);
+    equal(before?money(before,"cash_balance_after_minor"):0,money(s,"beginning_cash_balance_minor"),"statement opening");
+    equal(last?money(last,"cash_balance_after_minor"):0,money(s,"ending_cash_balance_minor"),"statement closing");
+    for(const [kind,key,sign] of [["deposit","deposited_minor",1],["wager","played_minor",-1],["payout","won_minor",1],["withdrawal","withdrawn_minor",-1],["refund","refunded_minor",1]] as const) equal(total(type(kind),"amount_minor")*sign,money(s,key),key);
+    equal(placed.length,money(s,"bets_placed"),"statement bet count");
+    equal(placed.filter(b=>b.status==="won").length,money(s,"bets_won"),"statement won count");
+    equal(total(type("bonus_award"),"bonus_amount_minor"),money(s,"promotions_awarded_minor"),"statement bonus awards");
+    equal(-total(type("bonus_wager"),"bonus_amount_minor"),money(s,"promotions_played_minor"),"statement bonus stakes");
+    for(const [kind,key,sign] of [["token_award","tokens_awarded",1],["token_used","tokens_used",-1],["token_expired","tokens_expired",-1]] as const) equal(total(type(kind),"token_quantity_change")*sign,money(s,key),key);
+    for(const key of ["purchased_minor","rebated_minor","promotions_expired_minor"]) equal(money(s,key),0,key);
+  }
 }

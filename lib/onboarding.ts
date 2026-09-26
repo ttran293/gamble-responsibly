@@ -1,10 +1,9 @@
 import { z } from "zod";
 
 export const goalOptions = [
-  { value: "reduce", label: "Reduce my betting", description: "Set a smaller limit that feels realistic." },
-  { value: "stop", label: "Stop betting", description: "Make a plan for a fresh start." },
-  { value: "understand", label: "Understand my habits first", description: "Start by seeing the full picture." },
-  { value: "unsure", label: "I'm not sure yet", description: "You can decide later." }
+  { value: "stay", label: "Stay within limits", description: "Set commitments and review your activity." },
+  { value: "reduce", label: "Reduce gambling", description: "Choose a baseline and a specific reduction goal." },
+  { value: "stop", label: "Stop gambling", description: "Choose a stop date and prepare a support plan." }
 ] as const;
 
 export const focusOptions = [
@@ -55,7 +54,7 @@ const values = <T extends ReadonlyArray<{ value: string }>>(options: T) =>
   options.map((option) => option.value) as [T[number]["value"], ...T[number]["value"][]];
 
 export const onboardingSchema = z.object({
-  goal: z.enum(values(goalOptions)),
+  goal: z.enum(["stay", "reduce", "stop", "understand", "unsure"]),
   focusAreas: z.array(z.enum(values(focusOptions))).max(focusOptions.length),
   gamblingTypes: z.array(z.enum(values(gamblingTypeOptions))).max(gamblingTypeOptions.length),
   frequency: z.enum(values(frequencyOptions)).nullable(),
@@ -79,7 +78,7 @@ export const onboardingSchema = z.object({
 export type OnboardingAnswers = z.infer<typeof onboardingSchema>;
 
 export const defaultOnboardingAnswers: OnboardingAnswers = {
-  goal: "unsure",
+  goal: "stay",
   focusAreas: [],
   gamblingTypes: [],
   frequency: null,

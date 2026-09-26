@@ -1,8 +1,18 @@
 # Metrics
 
-The dashboard reads synthetic DraftKings CSV fixtures from `data/draftkings/` on the server. It does not connect to a live sportsbook. Reloading reads the same files again. Missing or invalid files display an error.
+The dashboard reads synthetic DraftKings, FanDuel, and fictional Moonharbor CSV fixtures from their respective folders under `data/` on the server. It does not connect to a live sportsbook. Reloading reads the same files again. Missing or invalid files display an error.
 
-`/demo` provides a public synthetic preview. `/dashboard` and `/api/metrics` require sign-in. The API accepts optional `from` and `to` dates in `YYYY-MM-DD` format.
+`/demo` provides a public synthetic preview. `/dashboard` and `/api/metrics` require sign-in. The API accepts optional `from` and `to` dates in `YYYY-MM-DD` format and a `providers` parameter (a comma-separated selection of `draftkings`, `fanduel`, and `moonharbor`). It defaults to DraftKings.
+
+## Demo connections
+
+Open `/connect` to connect a provider. The screen supports loading, success, simulated failure, retry, reload, and disconnect. Connection choices are stored for the current browser tab session. Only synthetic data is used; no credentials or live provider requests are involved.
+
+Select All accounts, DraftKings, FanDuel, or Moonharbor on the dashboard. Reload replaces provider data rather than appending it. Failed reloads retain the previous snapshot in the current page and show a stale-data notice.
+
+FanDuel ledger entry IDs distinguish split transaction entries. Promotions and monthly statements validate the source ledger; their totals are not added again to dashboard amounts. Token activity is separate from cash and bonus money.
+
+Moonharbor is a metrics-only fictional provider. Its timestamps are normalized from their supplied offsets to UTC. Its cash-only transaction schema has no bonus wallet; the adapter uses zero bonus movement and balance and checks that wager links reconcile. Moonharbor is excluded from saved guardrail coverage and provider break tools.
 
 ## Dates and amounts
 
@@ -25,6 +35,8 @@ Date ranges include both endpoints and use UTC. The default range covers the ful
 
 Settled results and cash betting flow can differ when bets settle in a later period or remain open. Net deposits are not betting losses. Reused winnings can contribute to multiple wagers.
 
+Combined balances sum the selected account ledgers, and betting days count unique dates across accounts. Provider history ranges appear above the metrics. Outside shared coverage, totals include available records only and the last recorded balances are carried forward. Days without bets and period comparisons are unavailable when the selected accounts do not cover the required dates.
+
 Period comparisons use an equally long preceding period and are unavailable when there is insufficient earlier history. Days without bets describe only the connected dataset. App usage time is unavailable.
 
 ## Guardrail previews
@@ -41,4 +53,4 @@ Zero is a valid limit; matching a cap exactly does not exceed it. These settings
 
 The loader checks source IDs, timestamps, wager links, settlement states, and cash/bonus balances. Metrics and comparisons are descriptive calculations, not ML risk scores or psychological assessments. Positive betting results do not establish healthy gambling behavior.
 
-Live provider connections, saved guardrail limits, alerts, accountability notifications, and app usage tracking are not implemented. Onboarding goals and preferences are saved separately from the temporary guardrail previews. Real user data must not be used in the public demo.
+Saved goals, limits, and in-app notice history are available on `/guardrails`, with a separate browser-saved demo at `/demo/guardrails`. See [GUARDRAILS.md](GUARDRAILS.md). The historical previews on the metrics dashboard remain temporary. Live provider connections, background alerts, accountability notifications, and app usage tracking are not implemented. Real user data must not be used in the public demo.

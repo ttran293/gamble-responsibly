@@ -1,6 +1,6 @@
 export type Bet = { id: string; placedAt: string; settledAt: string | null; status: string; stake: number; cashStake: number; bonusStake: number; payout: number; refund: number; wagerId: string };
-export type Transaction = { id: string; at: string; type: string; cash: number; bonus: number; balance: number; bonusBalance: number; betId: string; description: string };
-export type Snapshot = { bets: Bet[]; transactions: Transaction[]; loadedAt: string; from: string; through: string; provider: string; mode: "demo" };
+export type Transaction = { provider?: string; id: string; at: string; type: string; cash: number; bonus: number; balance: number; bonusBalance: number; betId: string; description: string };
+export type Snapshot = { supplemental?: { promotions: number; statements: number }; coverage?: { provider: string; from: string; through: string }[]; bets: Bet[]; transactions: Transaction[]; loadedAt: string; from: string; through: string; provider: string; mode: "demo" };
 export const day = (at: string) => at.slice(0, 10);
 const DAY = 86400000;
 export const shiftDay = (date: string, delta: number) => new Date(Date.parse(date + "T00:00:00Z") + delta * DAY).toISOString().slice(0, 10);
@@ -33,12 +33,14 @@ export function summarize(snapshot: Snapshot, from: string, to: string) {
   let run = 0, longestBreak = 0;
   for (const d of daily) { run = d.count ? 0 : run + 1; longestBreak = Math.max(longestBreak, run); }
   const priorTo = shiftDay(from, -1), priorFrom = shiftDay(from, -days);
-  const priorAvailable = priorFrom >= snapshot.from;
+  const coverage = snapshot.coverage ?? [{ provider: snapshot.provider, from: snapshot.from, through: snapshot.through }];
+  const completeCoverage = coverage.every(c => from >= c.from && to <= day(c.through));
+  const priorAvailable = completeCoverage && coverage.every(c => priorFrom >= c.from && priorTo <= day(c.through));
   const priorBets = snapshot.bets.filter(b => day(b.placedAt) >= priorFrom && day(b.placedAt) <= priorTo);
   const comparison = priorAvailable ? { from: priorFrom, to: priorTo, bets: priorBets.length, cashStake: sum(priorBets, b => b.cashStake), activeDays: new Set(priorBets.map(b => day(b.placedAt))).size } : null;
   const open = snapshot.bets.filter(b => day(b.placedAt) <= to && (!b.settledAt || day(b.settledAt) > to));
   return {
-    from, to, days, deposits, withdrawals, netDeposits: deposits - withdrawals, payouts, refunds,
+    completeCoverage, from, to, days, deposits, withdrawals, netDeposits: deposits - withdrawals, payouts, refunds,
     cashWagered, bonusWagered, totalWagered: cashWagered + bonusWagered,
     cashBettingFlow: sum(txs.filter(t => ["wager", "bonus_wager", "payout", "refund"].includes(t.type)), t => t.cash),
     settledResult: sum(settled, b => b.payout + b.refund - b.cashStake), settledCount: settled.length,
@@ -56,4 +58,16 @@ export function previewLimits(metrics: ReturnType<typeof summarize>, depositLimi
     betsOverLimit: stakeLimit === null ? null : metrics.bets.filter(b => b.cashStake > stakeLimit).length,
     activeDaysExceeded: activeDayLimit === null ? null : metrics.activeDays > activeDayLimit,
   };
+}
+
+// Balances belong to accounts. Rebuild the combined ledger instead of using
+// whichever provider happened to have the latest transaction.
+export function combineSnapshots(snapshots: Snapshot[]): Snapshot {
+  if (!snapshots.length) throw new Error("Connect at least one account.");
+  if (new Set(snapshots.map(s => s.provider)).size !== snapshots.length) throw new Error("Duplicate provider.");
+  const bets = snapshots.flatMap(s => s.bets.map(b => ({ ...b, id: `${s.provider}:${b.id}`, wagerId: `${s.provider}:${b.wagerId}` })));
+  const transactions = snapshots.flatMap(s => s.transactions.map(t => ({ ...t, provider: s.provider, id: `${s.provider}:${t.id}`, betId: t.betId ? `${s.provider}:${t.betId}` : "" }))).sort((a,b) => a.at.localeCompare(b.at));
+  let cash = 0, bonus = 0;
+  for (const t of transactions) { cash += t.cash; bonus += t.bonus; t.balance = cash; t.bonusBalance = bonus; }
+  return { bets, transactions, mode: "demo", provider: snapshots.length === 1 ? snapshots[0].provider : "All accounts", loadedAt: snapshots.map(s=>s.loadedAt).sort()[0], from: snapshots.map(s=>s.from).sort()[0], through: snapshots.map(s=>s.through).sort().at(-1)!, coverage: snapshots.map(s=>({provider:s.provider,from:s.from,through:s.through})), supplemental: snapshots.reduce((n,s)=>({promotions:n.promotions+(s.supplemental?.promotions??0),statements:n.statements+(s.supplemental?.statements??0)}),{promotions:0,statements:0}) };
 }

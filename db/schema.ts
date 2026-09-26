@@ -34,3 +34,10 @@ export const userProfiles = pgTable("user_profiles", {
 export const emergencyContactLinks = pgTable("emergency_contact_links", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), supportContactId: uuid("support_contact_id").notNull().references(() => supportContacts.id), consentedAt: timestamp("consented_at", { withTimezone: true }).defaultNow().notNull(), revokedAt: timestamp("revoked_at", { withTimezone: true }) });
 export const activityEntries = pgTable("activity_entries", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), kind: text("kind").notNull(), amountCents: text("amount_cents").notNull(), occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() });
 export const pausePlans = pgTable("pause_plans", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), goal: text("goal").notNull(), trigger: text("trigger"), action: text("action").notNull(), isActive: boolean("is_active").default(true).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() });
+
+export const guardrailState = pgTable("guardrail_state", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  revisions: jsonb("revisions").notNull().default([]),
+  notices: jsonb("notices").notNull().default([]),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+});

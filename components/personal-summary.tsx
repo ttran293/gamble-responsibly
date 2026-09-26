@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  focusOptions, frequencyOptions, gamblingTypeOptions, goalOptions,
+  focusOptions, frequencyOptions, goalOptions,
   labelFor, pauseActionOptions, triggerOptions, type OnboardingAnswers
 } from "../lib/onboarding";
 
 const goalDetails: Record<OnboardingAnswers["goal"], string> = {
+  stay: "Set commitments and review recorded activity against your limits.",
   reduce: "You can work toward a smaller amount or fewer betting days, at your own pace.",
   stop: "You chose to stop betting. Your plan can help you decide what to do when an urge arrives.",
   understand: "Start by seeing your betting activity and spending clearly. You can choose another goal later.",
@@ -24,7 +25,7 @@ function goalTarget(answers: OnboardingAnswers) {
   if (answers.goal === "reduce" && answers.reduceTarget) {
     return answers.reduceTarget.kind === "days_per_week"
       ? `Your target: ${answers.reduceTarget.value} betting ${answers.reduceTarget.value === 1 ? "day" : "days"} per week.`
-      : `Your target: up to $${answers.reduceTarget.value.toLocaleString()} in weekly spending.`;
+      : `Your target: up to $${answers.reduceTarget.value.toLocaleString()} in weekly cash wagers.`;
   }
   if (answers.goal === "stop" && answers.stopDate) return `Your start date: ${answers.stopDate}.`;
   return null;
@@ -33,7 +34,6 @@ function goalTarget(answers: OnboardingAnswers) {
 export function PersonalSummary({ answers, emailVerified }: { answers: OnboardingAnswers; emailVerified: boolean }) {
   const [pauseOpen, setPauseOpen] = useState(false);
   const focus = answers.focusAreas.map((value) => labelFor(focusOptions, value));
-  const types = answers.gamblingTypes.map((value) => labelFor(gamblingTypeOptions, value));
   const triggers = answers.triggers.map((value) => labelFor(triggerOptions, value));
   const target = goalTarget(answers);
 
@@ -41,8 +41,8 @@ export function PersonalSummary({ answers, emailVerified }: { answers: Onboardin
     {!emailVerified && <div className="verification-banner"><div><strong>Protect this space</strong><br />Check your email to verify your account. You can keep using Stillwater now.</div></div>}
     <div className="personal-summary-header"><div><span className="eyebrow">Based on your answers</span><h2>Your starting point</h2></div><button className="urge-button" onClick={() => setPauseOpen(true)}><span className="urge-dot"></span>I feel like gambling <b>→</b></button></div>
     <div className="dashboard-personal-grid">
-      <article className="panel personal-card"><span className="eyebrow">Your direction</span><h2>{labelFor(goalOptions, answers.goal)}</h2><p>{goalDetails[answers.goal]}</p>{target && <p className="personal-target">{target}</p>}<Link className="text-link" href="/onboarding">Update my answers →</Link></article>
-      <article className="panel personal-card"><span className="eyebrow">What matters to you</span><h2>Your focus</h2>{focus.length ? <div className="personal-chips">{focus.map((label) => <span key={label}>{label}</span>)}</div> : <p>You can choose what to focus on whenever you're ready.</p>}{answers.frequency && <p className="personal-detail"><strong>Current pace:</strong> {labelFor(frequencyOptions, answers.frequency)}</p>}{types.length > 0 && <p className="personal-detail"><strong>Betting types:</strong> {types.join(", ")}</p>}</article>
+      <article className="panel personal-card"><span className="eyebrow">Your direction</span><h2>{labelFor(goalOptions, answers.goal)}</h2><p>{goalDetails[answers.goal]}</p>{target && <p className="personal-target">{target}</p>}<Link className="text-link" href="/guardrails">Set goal and guardrails →</Link></article>
+      <article className="panel personal-card"><span className="eyebrow">What matters to you</span><h2>Your focus</h2>{focus.length ? <div className="personal-chips">{focus.map((label) => <span key={label}>{label}</span>)}</div> : <p>You can choose what to focus on whenever you're ready.</p>}{answers.frequency && <p className="personal-detail"><strong>Current pace:</strong> {labelFor(frequencyOptions, answers.frequency)}</p>}</article>
     </div>
     <div className="dashboard-personal-grid dashboard-second-row">
       <article className="plan-card"><span className="eyebrow">Your pause plan</span><h2>When an urge shows up</h2><p>{pauseDescription(answers)}</p><button onClick={() => setPauseOpen(true)} className="outline-button">Review my plan →</button></article>

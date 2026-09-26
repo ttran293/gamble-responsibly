@@ -38,3 +38,7 @@ next-env.d.ts
 
 # Private local demo fixtures
 /data/draftkings/
+
+/data/fanduel/
+
+/data/moonharbor/
