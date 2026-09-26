@@ -8,6 +8,8 @@ import { TakeABreak } from "./take-a-break";
 import { Guardrails } from "./guardrails";
 import { PersonalSummary } from "./personal-summary";
 
+import type { SavedInsightContext } from "./activity-insights";
+
 type Provider = "draftkings" | "fanduel" | "moonharbor";
 type Connection = { status: "disconnected" | "connecting" | "connected" | "error"; snapshot?: Snapshot; error?: string };
 const providers: Provider[] = ["draftkings", "fanduel", "moonharbor"];
@@ -17,6 +19,7 @@ const initial = (): Record<Provider, Connection> => ({ draftkings: {status:"disc
 
 export function ConnectedDashboard({ screen = "dashboard", name = "Demo", demo = false, answers, emailVerified }: { screen?: "dashboard" | "connections"; name?: string; demo?: boolean; answers?: OnboardingAnswers; emailVerified?: boolean }) {
   const [connections, setConnections] = useState(initial);
+  const [savedInsights, setSavedInsights] = useState<SavedInsightContext|null>(null);
   const [savedGoal, setSavedGoal] = useState<"stay"|"reduce"|"stop"|null>(null);
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState("all");
@@ -80,9 +83,9 @@ export function ConnectedDashboard({ screen = "dashboard", name = "Demo", demo =
   </section>;
 
   if(screen==="connections") return <><div className="private-nav"><a className="brand" href="/">◒ Jelly</a><a href="/demo">View demo metrics →</a><a href="/dashboard">My dashboard →</a></div><main className="private-dashboard metrics-dashboard">{manager}</main></>;
-  const guardrails = <Guardrails demo={demo} compact onGoalChange={setSavedGoal}/>;
+  const guardrails = <Guardrails demo={demo} compact onGoalChange={setSavedGoal} onInsightsChange={setSavedInsights}/>;
   const supported = filtered.filter((p): p is "draftkings" | "fanduel" => p !== "moonharbor");
   const controls = <>{supported.length > 0 && <><TakeABreak providers={supported}/>{guardrails}</>}<div className="account-toolbar"><a href="/connect">Manage connections</a><label>Show accounts <select aria-label="Show accounts" value={selected} onChange={e=>setSelected(e.target.value)}><option value="all">All accounts ({connected.length})</option>{connected.map(p=><option key={p} value={p}>{names[p]}</option>)}</select></label></div>{providers.filter(p=>connections[p].status==="error").map(p=><p role="alert" key={p}>{names[p]}: {connections[p].error} {connections[p].snapshot?"Showing previously loaded data.":"Not included in metrics."} <a href="/connect">Retry connection</a></p>)}</>;
-  if(snapshot) return <PrivateDashboard key={filtered.join(",")} name={name} snapshot={snapshot} demo={demo} answers={answers} emailVerified={emailVerified} connectionControls={controls} metricsOnly={supported.length === 0} stopping={supported.length > 0 && savedGoal==="stop"}/>;
+  if(snapshot) return <PrivateDashboard key={filtered.join(",")} name={name} snapshot={snapshot} demo={demo} answers={answers} emailVerified={emailVerified} connectionControls={controls} savedInsights={supported.length > 0 ? savedInsights : null} metricsOnly={supported.length === 0} stopping={supported.length > 0 && savedGoal==="stop"}/>;
   return <><div className="private-nav"><a className="brand" href="/">◒ Jelly</a></div><main className="private-dashboard metrics-dashboard">{!demo&&answers&&<PersonalSummary answers={answers} emailVerified={emailVerified??true}/>}<section className="panel"><h1>{ready?"Connect a demo account to begin":"Loading demo connections…"}</h1><p>Demo connection · Synthetic data</p><p>Connect DraftKings, FanDuel, or fictional Moonharbor to view activity and combined metrics.</p><a className="outline-button" href="/connect">Connect accounts →</a></section>{guardrails}{ready&&manager}</main></>;
 }

@@ -4,6 +4,8 @@ import { defaultPlan, emptyCaps, goalLabels, metricLabels, monetary, planSchema,
 import { evaluate, localParts, mergeNotices, reductionTarget, windowDates } from "../lib/guardrails/evaluate";
 import type { Snapshot } from "../lib/metrics/core";
 
+import type { SavedInsightContext } from "./activity-insights";
+
 const key="stillwater-demo-guardrails-v1";
 const clockKey="stillwater-demo-clock-v1";
 const firstClock="2026-08-10T12:00:00.000Z";
@@ -12,7 +14,7 @@ const format=(metric:string,value:number)=>monetary(metric)?money(value):String(
 const special:Record<string,string>={stop:"Bet after stop date",blockedDay:"Bet on a chosen no-gambling day",quietHours:"Bet during quiet hours"};
 const emptyState=():GuardrailState=>({revisions:[],notices:[]});
 
-export function Guardrails({demo=false,initialGoal="stay",initialStopDate,initialPausePlan="",compact=false,onGoalChange}:{demo?:boolean;initialGoal?:Plan["goal"];initialStopDate?:string|null;initialPausePlan?:string;compact?:boolean;onGoalChange?:(goal:Plan["goal"]|null)=>void}) {
+export function Guardrails({demo=false,initialGoal="stay",initialStopDate,initialPausePlan="",compact=false,onGoalChange,onInsightsChange}:{demo?:boolean;initialGoal?:Plan["goal"];initialStopDate?:string|null;initialPausePlan?:string;compact?:boolean;onGoalChange?:(goal:Plan["goal"]|null)=>void;onInsightsChange?:(context:SavedInsightContext)=>void}) {
   const [state,setState]=useState<GuardrailState>(emptyState),[plan,setPlan]=useState<Plan>(()=>defaultPlan(initialGoal));
   const [snapshots,setSnapshots]=useState<Snapshot[]>([]),[clock,setClock]=useState(firstClock),[clockInput,setClockInput]=useState(firstClock.slice(0,16));
   const [status,setStatus]=useState(""),[ready,setReady]=useState(false),[saving,setSaving]=useState(false);
@@ -45,6 +47,7 @@ export function Guardrails({demo=false,initialGoal="stay",initialStopDate,initia
   // initialGoal is only a default before the first saved plan.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[demo]);
+  useEffect(()=>{if(ready)onInsightsChange?.({state,result,asOf});},[ready,state,result,asOf,onInsightsChange]);
   function update<K extends keyof Plan>(field:K,value:Plan[K]){setPlan(p=>({...p,[field]:value}));setPreview(null);}
   function validate(){const parsed=planSchema.safeParse(plan);if(!parsed.success)throw new Error(parsed.error.issues[0].message);reductionTarget(parsed.data,snapshots);return parsed.data;}
   function storeDemo(next:GuardrailState,now:string){

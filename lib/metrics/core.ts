@@ -1,4 +1,4 @@
-export type Bet = { id: string; placedAt: string; settledAt: string | null; status: string; stake: number; cashStake: number; bonusStake: number; payout: number; refund: number; wagerId: string };
+export type Bet = { provider?: string; id: string; placedAt: string; settledAt: string | null; status: string; stake: number; cashStake: number; bonusStake: number; payout: number; refund: number; wagerId: string };
 export type Transaction = { provider?: string; id: string; at: string; type: string; cash: number; bonus: number; balance: number; bonusBalance: number; betId: string; description: string };
 export type Snapshot = { supplemental?: { promotions: number; statements: number }; coverage?: { provider: string; from: string; through: string }[]; bets: Bet[]; transactions: Transaction[]; loadedAt: string; from: string; through: string; provider: string; mode: "demo" };
 export const day = (at: string) => at.slice(0, 10);
@@ -65,7 +65,7 @@ export function previewLimits(metrics: ReturnType<typeof summarize>, depositLimi
 export function combineSnapshots(snapshots: Snapshot[]): Snapshot {
   if (!snapshots.length) throw new Error("Connect at least one account.");
   if (new Set(snapshots.map(s => s.provider)).size !== snapshots.length) throw new Error("Duplicate provider.");
-  const bets = snapshots.flatMap(s => s.bets.map(b => ({ ...b, id: `${s.provider}:${b.id}`, wagerId: `${s.provider}:${b.wagerId}` })));
+  const bets = snapshots.flatMap(s => s.bets.map(b => ({ ...b, provider: s.provider, id: `${s.provider}:${b.id}`, wagerId: `${s.provider}:${b.wagerId}` })));
   const transactions = snapshots.flatMap(s => s.transactions.map(t => ({ ...t, provider: s.provider, id: `${s.provider}:${t.id}`, betId: t.betId ? `${s.provider}:${t.betId}` : "" }))).sort((a,b) => a.at.localeCompare(b.at));
   let cash = 0, bonus = 0;
   for (const t of transactions) { cash += t.cash; bonus += t.bonus; t.balance = cash; t.bonusBalance = bonus; }

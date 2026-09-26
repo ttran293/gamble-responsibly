@@ -54,3 +54,11 @@ Zero is a valid limit; matching a cap exactly does not exceed it. These settings
 The loader checks source IDs, timestamps, wager links, settlement states, and cash/bonus balances. Metrics and comparisons are descriptive calculations, not ML risk scores or psychological assessments. Positive betting results do not establish healthy gambling behavior.
 
 Saved goals, limits, and in-app notice history are available on `/guardrails`, with a separate browser-saved demo at `/demo/guardrails`. See [GUARDRAILS.md](GUARDRAILS.md). The historical previews on the metrics dashboard remain temporary. Live provider connections, background alerts, accountability notifications, and app usage tracking are not implemented. Real user data must not be used in the public demo.
+
+## Activity insights
+
+The dashboard shows up to three cards: saved commitment notices, unusual recorded activity, and equal-period comparisons of betting days and cash stakes. Stop plans show recorded activity and the saved personal plan instead of comparisons. Saved notices retain their own account coverage and evaluation time. Demo dismissals are stored in the browser and can be restored.
+
+The activity rule checks completed UTC days against the preceding seven days for each selected account and the combined view. It requires at least three earlier betting days and five cash bets. Both bet count and median cash stake must at least double, with minimum increases of three bets above the earlier average per betting day and $5 above the earlier cash-stake median. Missing coverage and incomplete final days are skipped. This is a descriptive demo rule, not ML or a measure of gambling harm; it sends no contact alerts.
+
+Moonharbor's August 12 activity demonstrates the rule. Equal-period comparisons require full earlier coverage for every selected account; the default August 1–19 range may not have enough earlier history for those comparisons.

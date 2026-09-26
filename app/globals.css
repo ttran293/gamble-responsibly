@@ -92,3 +92,12 @@
   .metrics-dashboard .activity-row > time { grid-column:1 / -1; grid-row:2; }
   .metrics-dashboard .activity-row > b { grid-column:2; grid-row:1; }
 }
+
+.activity-insights { margin:20px 0; }
+.insight-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr)); gap:16px; }
+.insight-cards article { padding:18px; border:1px solid #d9e2db; background:#f7f8f4; min-width:0; }
+.insight-cards h3 { margin:0 0 10px; font-size:18px; }
+.insight-cards p { line-height:1.6; }
+.insight-cards small { display:block; color:var(--ink-muted); overflow-wrap:anywhere; }
+.insight-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
+.activity-insights details { margin:14px 0; }
