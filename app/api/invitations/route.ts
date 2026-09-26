@@ -34,8 +34,8 @@ export async function POST(request: Request) {
     const email = await resend.emails.send({
       from: emailFrom,
       to: recipientEmail,
-      subject: `${senderName} shared a private Stillwater invitation`,
-      html: `<p>${senderName} shared a private Stillwater invitation with you.</p><p>This does not give them access to your personal information. If you choose to join, you can add or remove them as a support contact at any time.</p><p><a href="${inviteUrl}">Open your private invitation</a></p><p>This invitation expires in 72 hours.</p>`
+      subject: `${senderName} invited you to use Stillwater`,
+      html: `<p>${senderName} invited you to use Stillwater to track your betting habits and spending.</p><p>Joining is your choice. They cannot see your activity or finances.</p><p><a href="${inviteUrl}">Open invitation</a></p><p>This invitation expires in 72 hours.</p>`
     });
     if (email.error) throw new Error(email.error.message);
     await db.execute(sql`update invitations set resend_message_id = ${email.data?.id ?? null} where id = ${invitation.rows[0].id}`);

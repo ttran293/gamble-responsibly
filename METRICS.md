@@ -41,4 +41,4 @@ Zero is a valid limit; matching a cap exactly does not exceed it. These settings
 
 The loader checks source IDs, timestamps, wager links, settlement states, and cash/bonus balances. Metrics and comparisons are descriptive calculations, not ML risk scores or psychological assessments. Positive betting results do not establish healthy gambling behavior.
 
-Live provider connections, saved goals, alerts, accountability notifications, and app usage tracking are not implemented. Real user data must not be used in the public demo.
+Live provider connections, saved guardrail limits, alerts, accountability notifications, and app usage tracking are not implemented. Onboarding goals and preferences are saved separately from the temporary guardrail previews. Real user data must not be used in the public demo.

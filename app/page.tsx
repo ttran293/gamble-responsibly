@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 const transactions = [
@@ -37,13 +38,12 @@ export default function StillwaterApp() {
       <header className="nav">
         <button className="brand" onClick={() => setView("home")}><span>◒</span> stillwater</button>
         <nav>
-          <a href="/demo">Explore demo metrics</a>
-          <button onClick={() => go("friend")}>For someone you care about</button>
-          <button className="nav-cta" onClick={() => go("tracker")}>My private tracker <span>→</span></button>
+          <Link href="/demo">Explore demo metrics</Link>
+          <Link className="nav-cta" href="/sign-in">Log In</Link>
         </nav>
       </header>
 
-      {view === "home" && <Home onChoose={go} />}
+      {view === "home" && <Home />}
       {view === "friend" && <Friend onTracker={() => go("tracker")} />}
       {view === "tracker" && <Tracker onPause={() => setPauseOpen(true)} />}
 
@@ -52,20 +52,63 @@ export default function StillwaterApp() {
   );
 }
 
-function Home({ onChoose }: { onChoose: (target: "friend" | "tracker") => void }) {
+type Path = "friend" | "tracker";
+
+const friendSteps = [
+  { n: "01", title: "Say what you've noticed", body: "Choose a calm moment. Lead with what you have seen and how you feel, rather than a demand." },
+  { n: "02", title: "Offer a betting tracker", body: "They can record betting activity, wins, and losses. Their data stays theirs." },
+  { n: "03", title: "Send an invitation", body: "They receive a private link and decide whether to join. You will not see their activity or spending.", href: "/supporter", action: "Send invitation" }
+];
+
+const trackerSteps = [
+  { n: "01", title: "Open a private space", body: "Your tracker is only for you. No one else can see what you record." },
+  { n: "02", title: "Record what happened", body: "Log activity, wins, losses, and money spent. Over time, you can see what changed." },
+  { n: "03", title: "Create an account", body: "Start with a name, email, and password. You can begin right away.", href: "/start", action: "Create account" }
+];
+
+function choosePath(event: React.KeyboardEvent, next: Path, setPath: (path: Path) => void) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  setPath(next);
+}
+
+function Home() {
+  const [path, setPath] = useState<Path>("friend");
+  const steps = path === "friend" ? friendSteps : trackerSteps;
+
   return <>
     <section className="hero">
-      <div className="eyebrow">A quiet place to get perspective</div>
-      <h1>Make space between<br />the urge and the next step.</h1>
-      <p>Understand your gambling in clear terms, make a plan while you feel steady, and find support for yourself or someone you care about.</p>
+      <div className="eyebrow">A clearer view of your betting habits</div>
+      <h1>Understand your betting,<br />one day at a time.</h1>
+      <p>Track activity, wins, losses, and spending. Notice patterns and decide what to do next, or invite someone you care about to try it for themselves.</p>
     </section>
     <section className="paths" aria-label="Choose your path">
-      <button className="path-card friend-card" onClick={() => onChoose("friend")}>
-        <div className="path-icon">♡</div><div><span className="eyebrow">I&apos;m concerned about someone</span><h2>Start with care, not confrontation.</h2><p>Find words for a difficult conversation, protect shared finances, and explore support for you.</p><span className="link">Explore the family guide <b>→</b></span></div>
-      </button>
-      <button className="path-card tracker-card" onClick={() => onChoose("tracker")}>
-        <div className="path-icon">◌</div><div><span className="eyebrow">I want to understand my gambling</span><h2>See the whole picture, privately.</h2><p>Track activity, notice patterns, and build a plan that feels right for you.</p><span className="link">Open my tracker <b>→</b></span></div>
-      </button>
+      <div role="button" tabIndex={0} className={`path-card friend-card${path === "friend" ? " is-selected" : ""}`} aria-pressed={path === "friend"} onClick={() => setPath("friend")} onKeyDown={(event) => choosePath(event, "friend", setPath)}>
+        <div className="path-icon">♡</div><div><h2>I&apos;m concerned about someone</h2><p className="path-lead">Invite them to track their habits and spending.</p><p>Share Stillwater with someone you care about. They can record their betting activity, wins, and losses. Their data stays theirs.</p></div>
+      </div>
+      <div role="button" tabIndex={0} className={`path-card tracker-card${path === "tracker" ? " is-selected" : ""}`} aria-pressed={path === "tracker"} onClick={() => setPath("tracker")} onKeyDown={(event) => choosePath(event, "tracker", setPath)}>
+        <div className="path-icon">◌</div><div><h2>I want to understand my gambling habit</h2><p className="path-lead">Track your habits and spending.</p><p>Record your betting activity, wins, losses, and money spent in one place. See how your habits change over time.</p></div>
+      </div>
+    </section>
+    <section className="how" aria-labelledby="how-heading">
+      <h2 id="how-heading">How it works</h2>
+      <p className="how-context">{path === "friend" ? "For someone you care about" : "For your own tracker"}</p>
+      <div className="how-grid">
+        {steps.map((step) => step.href ? (
+          <Link className="how-card how-action" href={step.href} key={step.n}>
+            <span>{step.n}</span>
+            <h3>{step.title}</h3>
+            <p>{step.body}</p>
+            <span className="link">{step.action} →</span>
+          </Link>
+        ) : (
+          <article className="how-card" key={step.n}>
+            <span>{step.n}</span>
+            <h3>{step.title}</h3>
+            <p>{step.body}</p>
+          </article>
+        ))}
+      </div>
     </section>
     <p className="privacy-note"><Icon>⌁</Icon> Your information is private. No one can see or connect your data without your clear permission.</p>
   </>;
@@ -80,7 +123,7 @@ function Friend({ onTracker }: { onTracker: () => void }) {
       <article className="guide-card"><span>02</span><h2>Protect what you share</h2><p>Get practical guidance on shared bills, accounts, and boundaries. You cannot access their financial data without consent.</p><a href="#finances">Explore financial safeguards →</a></article>
       <article className="guide-card"><span>03</span><h2>Find support for you</h2><p>Supporting someone can be exhausting. Connect with services and peers who understand what this can feel like.</p><a href="#support">Find support options →</a></article>
     </div>
-    <div className="invite"><div><span className="eyebrow">A gentle invitation</span><h2>They can choose to reflect in private.</h2><p>Stillwater is built for personal choice. You could share this link, without pressure.</p></div><button className="primary" onClick={onTracker}>See the private tracker <span>→</span></button></div>
+    <div className="invite"><div><span className="eyebrow">An invitation</span><h2>They can track their habits and spending.</h2><p>They decide whether to use Stillwater, and their information remains theirs.</p></div><button className="primary" onClick={onTracker}>See the betting tracker <span>→</span></button></div>
   </section>;
 }
 

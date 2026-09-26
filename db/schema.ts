@@ -1,4 +1,5 @@
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import type { OnboardingAnswers } from "../lib/onboarding";
 
 // Better Auth core schema. The explicit column names keep the adapter and
 // Tiger Cloud migration in agreement.
@@ -24,7 +25,12 @@ export const supportContacts = pgTable("support_contacts", {
 export const invitations = pgTable("invitations", {
   id: uuid("id").defaultRandom().primaryKey(), recipientEmail: text("recipient_email").notNull(), supportContactId: uuid("support_contact_id").notNull().references(() => supportContacts.id), tokenHash: text("token_hash").notNull().unique(), note: text("note"), status: text("status").notNull(), resendMessageId: text("resend_message_id"), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), acceptedAt: timestamp("accepted_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 });
-export const userProfiles = pgTable("user_profiles", { userId: text("user_id").primaryKey(), onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() });
+export const userProfiles = pgTable("user_profiles", {
+  userId: text("user_id").primaryKey(),
+  onboardingAnswers: jsonb("onboarding_answers").$type<OnboardingAnswers>(),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
 export const emergencyContactLinks = pgTable("emergency_contact_links", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), supportContactId: uuid("support_contact_id").notNull().references(() => supportContacts.id), consentedAt: timestamp("consented_at", { withTimezone: true }).defaultNow().notNull(), revokedAt: timestamp("revoked_at", { withTimezone: true }) });
 export const activityEntries = pgTable("activity_entries", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), kind: text("kind").notNull(), amountCents: text("amount_cents").notNull(), occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() });
 export const pausePlans = pgTable("pause_plans", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), goal: text("goal").notNull(), trigger: text("trigger"), action: text("action").notNull(), isActive: boolean("is_active").default(true).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() });

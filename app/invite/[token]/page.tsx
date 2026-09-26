@@ -2,5 +2,5 @@ import Link from "next/link";
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  return <main className="auth-shell"><section className="auth-card"><span className="eyebrow">A private invitation</span><h1>Start on your own terms.</h1><p>Someone who cares about you shared Stillwater. If you continue, you can choose whether to save them as a personal support contact. They will not be able to see your activity, finances, insights, or pause plan.</p><Link className="primary block" href={`/start?invite=${encodeURIComponent(token)}`}>Continue privately →</Link><Link className="quiet-link" href="/">No thanks, return home</Link></section></main>;
+  return <main className="auth-shell"><section className="auth-card"><span className="eyebrow">Invitation to Stillwater</span><h1>Track your habits and spending.</h1><p>Someone who cares about you invited you to use Stillwater. You decide whether to join. They will not be able to see your betting activity, finances, insights, or pause plan.</p><Link className="primary block" href={`/start?invite=${encodeURIComponent(token)}`}>Get started →</Link><Link className="quiet-link" href="/">No thanks, return home</Link></section></main>;
 }

@@ -36,8 +36,5 @@ next-env.d.ts
 /GAMBLING_HARM_AWARENESS_APP.md
 /skill/
 
-# Database migrations
-/db/migrations/
-
 # Private local demo fixtures
 /data/draftkings/

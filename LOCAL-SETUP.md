@@ -18,7 +18,7 @@ RESEND_API_KEY=REPLACE_WITH_YOUR_RESEND_KEY
 EMAIL_FROM=Stillwater <hello@your-verified-domain.example>
 ```
 
-Replace the placeholders with your own configuration. `.env` is ignored by Git. Database migrations are not currently included in the repository; a new database needs the tables defined in `db/schema.ts` before authentication and invitations can work.
+Replace the placeholders with your own configuration. `.env` is ignored by Git. Apply the SQL files in `db/migrations/` in numeric order before using authentication or onboarding. Existing databases need `0002_onboarding.sql` for saved onboarding answers.
 
 ## Demo data
 
@@ -40,7 +40,8 @@ Open [localhost:3000](http://localhost:3000).
 
 - `/demo`: synthetic metrics preview, without sign-in
 - `/start` and `/sign-in`: account creation and sign-in
-- `/dashboard`: metrics dashboard, with sign-in
+- `/dashboard`: saved onboarding choices and synthetic metrics dashboard, with sign-in
+- `/onboarding`: first-run questionnaire and later edits, with sign-in
 - `/supporter`: invitation form
 
 See [METRICS.md](METRICS.md) for metric definitions and demo limitations.

@@ -1,0 +1,8 @@
+-- Apply this migration to Tiger Cloud only after review: npm run db:migrate
+-- Better Auth tables are generated separately by its CLI and should be included before production use.
+create table if not exists support_contacts (id uuid primary key default gen_random_uuid(), name text not null, email text not null unique, created_at timestamptz not null default now());
+create table if not exists invitations (id uuid primary key default gen_random_uuid(), recipient_email text not null, support_contact_id uuid not null references support_contacts(id), token_hash text not null unique, note text, status text not null, resend_message_id text, expires_at timestamptz not null, accepted_at timestamptz, created_at timestamptz not null default now());
+create table if not exists user_profiles (user_id text primary key, onboarding_completed_at timestamptz, created_at timestamptz not null default now());
+create table if not exists emergency_contact_links (id uuid primary key default gen_random_uuid(), user_id text not null, support_contact_id uuid not null references support_contacts(id), consented_at timestamptz not null default now(), revoked_at timestamptz);
+create table if not exists activity_entries (id uuid primary key default gen_random_uuid(), user_id text not null, kind text not null, amount_cents text not null, occurred_at timestamptz not null, created_at timestamptz not null default now());
+create table if not exists pause_plans (id uuid primary key default gen_random_uuid(), user_id text not null, goal text not null, trigger text, action text not null, is_active boolean not null default true, created_at timestamptz not null default now());

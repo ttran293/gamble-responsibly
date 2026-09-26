@@ -1,8 +1,10 @@
 import "./globals.css";
+import "./refresh.css";
+import "./onboarding.css";
 
 export const metadata = {
-  title: "Stillwater | A calmer way to reflect",
-  description: "A private gambling-harm awareness companion."
+  title: "Stillwater | Track betting habits and spending",
+  description: "Track betting activity, spending, wins, and losses in one place."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
