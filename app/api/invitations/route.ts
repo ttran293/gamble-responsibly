@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { pool } from "../../../lib/db";
-import { escapeHtml, invitationBaseUrl } from "../../../lib/invitation-email";
+import { escapeHtml, invitationBaseUrl, invitationEmailFailureMessage } from "../../../lib/invitation-email";
 import { hashInviteToken } from "../../../lib/invitations";
 import { invitationSchema } from "../../../lib/validation";
 
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const { senderName, note } = parsed.data;
   const senderEmail = parsed.data.senderEmail.toLowerCase();
   const recipientEmail = parsed.data.recipientEmail.toLowerCase();
-  const confirmToken = randomBytes(32).toString("base64url");
+  const inviteToken = randomBytes(32).toString("base64url");
   let invitationId: string;
   const client = await pool.connect();
   try {
@@ -51,9 +51,9 @@ export async function POST(request: Request) {
       [senderName, senderEmail]
     );
     const invitation = await client.query<{ id: string }>(`
-      INSERT INTO invitations (recipient_email, support_contact_id, token_hash, sender_confirm_token_hash, sender_name, note, expires_at, status)
-      VALUES ($1, $2, $3, $4, $5, $6, now() + interval '24 hours', 'pending_sender') RETURNING id
-    `, [recipientEmail, contact.rows[0].id, hashInviteToken(randomBytes(32).toString("base64url")), hashInviteToken(confirmToken), senderName, note ?? null]);
+      INSERT INTO invitations (recipient_email, support_contact_id, token_hash, sender_name, note, expires_at, status)
+      VALUES ($1, $2, $3, $4, $5, now() + interval '72 hours', 'sending') RETURNING id
+    `, [recipientEmail, contact.rows[0].id, hashInviteToken(inviteToken), senderName, note ?? null]);
     invitationId = invitation.rows[0].id;
     await client.query("COMMIT");
   } catch {
@@ -62,17 +62,22 @@ export async function POST(request: Request) {
   } finally { client.release(); }
 
   try {
-    const confirmationUrl = `${baseUrl}/invite/confirm/${confirmToken}`;
+    const inviteUrl = `${baseUrl}/invite/${inviteToken}`;
     const result = await resend.emails.send({
       from: process.env.EMAIL_FROM!,
-      to: senderEmail,
-      subject: "Confirm your Jelly invitation request",
-      html: `<p>Someone entered your email address to invite a person to Jelly.</p><p>If that was you, confirm the request to send the invitation. If it was not you, ignore this email.</p><p><a href="${escapeHtml(confirmationUrl)}">Confirm invitation request</a></p><p>This link expires in 24 hours.</p>`
+      to: recipientEmail,
+      subject: `${senderName} invited you to use Jelly`,
+      html: `<p>Someone entered the name ${escapeHtml(senderName)} and invited you to use Jelly to track betting habits and spending.</p><p>Joining is your choice. The sender's email address has not been confirmed. They cannot see your activity or finances.</p><p><a href="${escapeHtml(inviteUrl)}">Open invitation</a></p><p>This invitation expires in 72 hours.</p>`
     });
-    if (result.error) throw new Error("Confirmation email failed");
+    if (result.error) throw result.error;
+    await pool.query(`
+      UPDATE invitations SET status = 'sent', resend_message_id = $2
+      WHERE id = $1 AND status = 'sending'
+    `, [invitationId!, result.data?.id ?? null]);
     return NextResponse.json({ ok: true }, { headers: noStore });
-  } catch {
-    await pool.query("DELETE FROM invitations WHERE id = $1 AND status = 'pending_sender'", [invitationId!]).catch(() => {});
-    return NextResponse.json({ error: "Could not send the confirmation email. Please try again later." }, { status: 503, headers: noStore });
+  } catch (error) {
+    console.error("Could not send invitation email", error);
+    await pool.query("DELETE FROM invitations WHERE id = $1 AND status = 'sending'", [invitationId!]).catch(() => {});
+    return NextResponse.json({ error: invitationEmailFailureMessage(error, "invitation") }, { status: 503, headers: noStore });
   }
 }

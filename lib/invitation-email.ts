@@ -2,6 +2,16 @@ export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 
+export function invitationEmailFailureMessage(error: unknown, kind: "confirmation" | "invitation"): string {
+  const message = error && typeof error === "object" && "message" in error && typeof error.message === "string" ? error.message : "";
+  if (/testing emails|testing mode|verify a domain|resend\.dev|domain is not verified/i.test(message)) {
+    return "Jelly email delivery is still in test mode. Please try again after a sending domain is verified.";
+  }
+  return kind === "confirmation"
+    ? "Could not send the confirmation email. Please try again later."
+    : "Could not send the invitation. Please try again later.";
+}
+
 export function invitationBaseUrl(): string {
   const configured = process.env.APP_URL;
   if (!configured) throw new Error("APP_URL is required for invitation email links.");

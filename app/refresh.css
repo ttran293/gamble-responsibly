@@ -312,8 +312,8 @@ button.text-link:hover { text-decoration: underline; }
 .band-inner { max-width: 1110px; margin: 0 auto; }
 .privacy-note { margin: 0; padding: 28px 20px 40px; background: var(--ivory); }
 .privacy-note .icon { display: none; }
-.egg {
-  margin: 40px 0 8px;
+.hero .egg {
+  margin: 24px auto 8px;
   max-width: 610px;
   color: var(--ink-muted);
   font-size: 15px;

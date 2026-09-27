@@ -57,7 +57,7 @@ export function EmergencyContactCard() {
       <JellyMessage label="A note from Jelly" className="emergency-contact-note">
         <strong>What an emergency contact is</strong>
         <p>An emergency contact is a person you trust. They do not see your habit record, spending, goal, dashboard, or conversations.</p>
-        <p>Jelly can email them when a streak of not betting breaks, or when you want to bet and want to reach out. The notice only says that you are struggling or asked to be contacted. They can then check in with you. You choose who to ask, and they choose whether to accept.</p>
+        <p>Jelly can email them when a streak of not betting breaks, or when you want to bet and want to reach out.</p>
       </JellyMessage>
       <div className="emergency-contact-intro">
         <span className="eyebrow">Someone who can help</span>
@@ -74,7 +74,6 @@ export function EmergencyContactCard() {
         <label>Their email<input required name="email" type="email" maxLength={254} placeholder="alex@example.com" /></label>
         <button className="primary" type="submit" disabled={busy}>{busy ? "Sending…" : "Request emergency contact"}</button>
       </form>
-      <p className="fineprint">We email them a link that expires in 72 hours. They become your emergency contact only after they accept.</p>
       {error && <p role="alert">{error}</p>}
     </>}
   </section>;

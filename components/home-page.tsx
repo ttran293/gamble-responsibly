@@ -60,12 +60,12 @@ type HowStep = { n: string; title: string; body: string; href?: string; action?:
 
 const friendSteps: HowStep[] = [
   { n: "01", title: "You're worried about someone", body: "Someone you care about is struggling with gambling, and you want to help." },
-  { n: "02", title: "Invite them to track a goal", body: "They can follow their habit and a goal to gamble less, or stop. Joining is their choice." },
-  { n: "03", title: "Be there when it gets hard", body: "If they join from your invitation, you become their emergency contact. Jelly lets you know when a streak of not betting breaks, or when they want to bet and want to reach out.", href: "/supporter", action: "Send invitation", cta: "Send an invitation when you're ready. Joining is their choice." }
+  { n: "02", title: "Invite them to track a goal", body: "Jelly tracks their habit and goal, and helps them gamble less, or stop." },
+  { n: "03", title: "Be there when it gets hard", body: "If they join from your invitation, you become their emergency contact. Jelly lets you know when a streak of not betting breaks, or when they want to bet and want to reach out.", href: "/supporter", action: "Send invitation", cta: "Send an invitation when you're ready." }
 ];
 
 const trackerSteps: HowStep[] = [
-  { n: "01", title: "Track your habit", body: "Record what you do, so the pattern is clear." },
+  { n: "01", title: "Track your habit", body: "Connect your apps to track your activity." },
   { n: "02", title: "Set a goal", body: "Choose to gamble less, or stop. Jelly helps you work toward it." },
   { n: "03", title: "Create an account", body: "Start with a name, email, and password. You can begin right away.", href: "/start", action: "Create account", cta: "Create an account to start tracking your habit and goal." }
 ];

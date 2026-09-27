@@ -116,7 +116,7 @@ export default function PrivacyPage() {
           <p>If the GDPR, UK GDPR, or Swiss data protection law applies, we rely on these bases:</p>
           <ul>
             <li><strong>Contract.</strong> Providing the account and the features you use.</li>
-            <li><strong>Consent.</strong> Sending chat content, and a short summary of your goal, focus, triggers, and pause action, to OpenAI. Adding an emergency contact when you create an account from an invitation, or when you request one and they accept. Emailing an invitation after the sender confirms. Emailing an emergency-contact request.</li>
+            <li><strong>Consent.</strong> Sending chat content, and a short summary of your goal, focus, triggers, and pause action, to OpenAI. Adding an emergency contact when you create an account from an invitation, or when you request one and they accept. Emailing an invitation at the sender's request. Emailing an emergency-contact request.</li>
             <li><strong>Legitimate interests.</strong> Securing accounts and sessions, and limiting misuse of invitations. Those interests are limited to running Jelly. They do not include advertising.</li>
           </ul>
           <p>You can withdraw chat consent by stopping use of chat and asking us to delete the thread. You can choose not to create an account from an invitation, and you can ignore an emergency-contact request. Withdrawal does not undo processing that has already happened.</p>
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
 
         <section id="others">
           <h2>Information from someone else</h2>
-          <p>If someone enters your email address to invite you, we receive that address, the sender’s name, and any note they wrote, from the sender. We email the sender a confirmation link first. The link expires in 24 hours. We email you only after they confirm. You can ignore that email.</p>
+          <p>If someone enters your email address to invite you, we receive that address, the sender’s name and email address, and any note they wrote, from the sender. We email you the invitation directly. The sender's email address has not been confirmed. You can ignore the invitation.</p>
           <p>Creating an account from the invitation is your choice. If you do, the sender becomes your emergency contact. They do not receive your habit record, spending, goal, dashboard, or chat.</p>
           <p>If someone with a Jelly account asks you to be their emergency contact, we email you their name, their email address, and a link. The link expires in 72 hours. You can ignore that email. If you accept, you do not receive their habit record, spending, goal, dashboard, or chat.</p>
         </section>
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
           <ul>
             <li><strong>Vercel</strong> hosts the application.</li>
             <li><strong>Timescale</strong> stores account and product data in the application database.</li>
-            <li><strong>Resend</strong> delivers verification email, sign-in links, invitation confirmations, invitations, and emergency-contact requests.</li>
+            <li><strong>Resend</strong> delivers verification email, sign-in links, invitations, and emergency-contact requests.</li>
             <li><strong>OpenAI</strong> generates chat replies and checks message text for crisis language. We send your message and a summary of your goal, focus areas, triggers, and pause action. Chat completion requests are sent with storage disabled. We still keep the conversation in our database for the period below. OpenAI receives this information only after you accept the chat disclosure.</li>
             <li><strong>Google Fonts</strong> receives the IP address and browser data your browser sends when it loads the typeface used on these pages.</li>
           </ul>
@@ -159,7 +159,7 @@ export default function PrivacyPage() {
             <li>Account, profile, guardrails, plan progress, and emergency-contact records are kept while the account exists, and removed when a deletion request is completed.</li>
             <li>Sessions end when they expire, normally within 30 days of the last refresh, or when you sign out.</li>
             <li>A magic-link sign-in expires after 10 minutes.</li>
-            <li>An invitation confirmation link expires after 24 hours. After the sender confirms, the invitation expires after 72 hours unless it is accepted first.</li>
+            <li>An invitation expires after 72 hours unless it is accepted first. Confirmation links sent for older invitation requests expire after 24 hours.</li>
             <li>An emergency-contact request link expires after 72 hours unless it is accepted first.</li>
             <li>Chat threads and messages are deleted 90 days after the thread was last updated. You can ask us to delete them sooner.</li>
             <li>Demo data in the browser remains until you clear site data for this site.</li>

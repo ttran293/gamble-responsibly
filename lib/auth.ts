@@ -6,7 +6,8 @@ import { Resend } from "resend";
 import { db } from "./db";
 import * as schema from "../db/schema";
 
-const deployedUrl = "https://gamble-responsibly.vercel.app";
+const deployedUrl = "https://myjelly.club";
+const legacyUrl = "https://gamble-responsibly.vercel.app";
 const configuredUrl = new URL(process.env.APP_URL ?? "http://localhost:3000").origin;
 const isLoopback = ["localhost", "127.0.0.1"].includes(new URL(configuredUrl).hostname);
 // A local APP_URL must not become the production auth URL on Vercel.
@@ -14,7 +15,7 @@ const appUrl = process.env.NODE_ENV === "production" && isLoopback ? deployedUrl
 const localDevelopment = process.env.NODE_ENV !== "production" && isLoopback;
 const localHosts = ["localhost:*", "127.0.0.1:*"];
 const localOrigins = localHosts.map(host => `http://${host}`);
-const productionOrigins = [...new Set([appUrl, deployedUrl])];
+const productionOrigins = [...new Set([appUrl, deployedUrl, legacyUrl])];
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const auth = betterAuth({

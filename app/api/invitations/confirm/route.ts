@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { Resend } from "resend";
 import { z } from "zod";
 import { pool } from "../../../../lib/db";
-import { escapeHtml, invitationBaseUrl } from "../../../../lib/invitation-email";
+import { escapeHtml, invitationBaseUrl, invitationEmailFailureMessage } from "../../../../lib/invitation-email";
 import { hashInviteToken } from "../../../../lib/invitations";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -55,8 +55,9 @@ export async function POST(request: Request) {
       html: `<p>Someone who confirmed control of ${escapeHtml(invite.sender_email)} invited you to Jelly.</p><p>They entered the name ${escapeHtml(invite.sender_name)}. Joining is your choice. They cannot see your activity or finances.</p><p><a href="${escapeHtml(inviteUrl)}">Open invitation</a></p><p>This invitation expires in 72 hours.</p>`
     });
     if (delivered.error) {
+      console.error("Could not send confirmed invitation", delivered.error);
       await client.query("ROLLBACK");
-      return Response.json({ error: "Could not send the invitation. Please try again later." }, { status: 503, headers: noStore });
+      return Response.json({ error: invitationEmailFailureMessage(delivered.error, "invitation") }, { status: 503, headers: noStore });
     }
     await client.query("UPDATE support_contacts SET name = $2 WHERE id = $1", [invite.support_contact_id, invite.sender_name]);
     await client.query(`
