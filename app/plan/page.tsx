@@ -1,13 +1,15 @@
+import Link from "next/link";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "../../lib/auth";
-import { ConnectedDashboard } from "../../components/connected-dashboard";
 import { db } from "../../lib/db";
-import { onboardingSchema } from "../../lib/onboarding";
 import { userProfiles } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { onboardingSchema } from "../../lib/onboarding";
+import { PlanContent } from "../../components/plan-content";
+import { SignOutButton } from "../../components/sign-out-button";
 
-export default async function DashboardPage() {
+export default async function PlanPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/sign-in");
   const [profile] = await db.select({
@@ -16,5 +18,9 @@ export default async function DashboardPage() {
   }).from(userProfiles).where(eq(userProfiles.userId, session.user.id)).limit(1);
   const parsed = onboardingSchema.safeParse(profile?.answers);
   if (!profile?.completedAt || !parsed.success || !["stay", "reduce", "stop"].includes(parsed.data.goal)) redirect("/onboarding");
-  return <ConnectedDashboard name={session.user.name || "there"} answers={parsed.data} />;
+
+  return <main className="onboarding-shell plan-shell">
+    <header className="onboarding-header"><Link className="brand" href="/dashboard"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</Link><div className="session-links"><Link href="/dashboard">Dashboard →</Link><SignOutButton /></div></header>
+    <PlanContent answers={parsed.data} />
+  </main>;
 }

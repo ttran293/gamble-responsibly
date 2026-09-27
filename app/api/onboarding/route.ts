@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { userProfiles } from "../../../db/schema";
 import { auth } from "../../../lib/auth";
-import { pool } from "../../../lib/db";
 import { db } from "../../../lib/db";
 import { onboardingSchema } from "../../../lib/onboarding";
 
@@ -25,11 +24,6 @@ export async function POST(request: Request) {
   };
 
   try {
-    const stored = await pool.query("SELECT revisions FROM guardrail_state WHERE user_id=$1", [session.user.id]);
-    const savedPlan = stored.rows[0]?.revisions?.at(-1)?.plan;
-    if (savedPlan && (answers.goal !== savedPlan.goal || answers.stopDate !== (savedPlan.goal === "stop" ? savedPlan.stopDate : null))) {
-      return NextResponse.json({error:"Update your saved goal and stop date on the guardrails page."}, {status:409});
-    }
     const existing = await db.select({ completedAt: userProfiles.onboardingCompletedAt })
       .from(userProfiles).where(eq(userProfiles.userId, session.user.id)).limit(1);
     await db.insert(userProfiles).values({

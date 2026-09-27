@@ -1,5 +1,13 @@
 .onboarding-shell { min-height: 100vh; background: var(--ivory); padding: 0 20px 72px; }
 .onboarding-header { max-width: 1040px; margin: auto; height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); }
+.onboarding-header .brand { display: inline-flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; }
+.onboarding-header .brand img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
+.session-links { display: flex; align-items: center; gap: 18px; }
+.session-control { display: inline-flex; align-items: center; gap: 8px; }
+.session-control .text-link { font-size: 14px; cursor: pointer; }
+.session-error { color: #a64238; font-size: 12px; }
+.simple-form label.auth-remember { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.simple-form .auth-remember input[type="checkbox"] { width: 18px; min-height: 0; height: 18px; margin: 0; padding: 0; flex: none; accent-color: var(--teal); }
 .onboarding-header > span:last-child { color: var(--ink-muted); font-size: 14px; }
 .onboarding-card { max-width: 760px; margin: 52px auto 0; padding: 42px; background: #fffefa; border: 1px solid var(--line); border-radius: var(--radius-card); }
 .onboarding-progress { margin-bottom: 33px; color: var(--ink-muted); font-size: 13px; font-weight: 600; }
@@ -36,26 +44,51 @@
 .onboarding-help p { color: var(--ink-muted); font-size: 14px; margin: 5px 0 10px; }
 .onboarding-help a, .pause-resources a { display: block; width: fit-content; color: var(--teal); font-size: 14px; font-weight: 600; margin-top: 7px; }
 .pause-resources { margin-top: 18px; }
+.onboarding-generating { min-height: 290px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.onboarding-generating .onboarding-intro { margin-bottom: 0; }
+.onboarding-spinner { width: 38px; height: 38px; margin-bottom: 27px; border: 4px solid #dbe9dd; border-top-color: var(--teal); border-radius: 50%; animation: plan-spin .85s linear infinite; }
+@keyframes plan-spin { to { transform: rotate(360deg); } }
+.plan-shell { padding-bottom: 90px; }
+.plan-hero, .plan-explanation, .plan-actions-footer, .plan-shell .personal-summary { max-width: 1040px; margin-left: auto; margin-right: auto; }
+.plan-hero { padding: 60px 0 26px; }
+.plan-hero h1 { font-size: clamp(38px, 5vw, 58px); line-height: 1.05; margin: 12px 0 22px; }
+.plan-hero p { color: var(--ink-muted); font-size: 17px; line-height: 1.5; margin: 9px 0; }
+.plan-shell .personal-summary { margin-top: 0; }
+.plan-shell .personal-overview-grid { margin-top: 0; }
+.plan-explanation { margin-top: 22px; padding: 20px 24px; border-radius: var(--radius-control); background: #eaf2eb; }
+.plan-explanation p { margin: 6px 0 0; color: var(--ink-muted); font-size: 14px; line-height: 1.5; }
+.plan-actions-footer { display: flex; align-items: center; gap: 25px; margin-top: 28px; }
+.plan-actions-footer .primary { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 20px; }
 
-.dashboard-personal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
 .personal-summary { margin: 25px 0 34px; }
-.personal-summary-header { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
-.personal-summary-header h2 { margin: 7px 0 0; font-size: 29px; line-height: 1.1; }
-.dashboard-second-row { margin-top: 18px; }
-.personal-card { display: flex; flex-direction: column; align-items: flex-start; min-height: 215px; }
-.personal-card h2 { margin: 10px 0 10px; }
-.personal-card p { color: var(--ink-muted); font-size: 15px; line-height: 1.5; }
-.personal-card .text-link { margin-top: auto; font-size: 14px; text-decoration: none; }
-.personal-target { padding: 10px 12px; border-radius: var(--radius-control); background: #eaf2eb; color: var(--teal) !important; font-weight: 600; }
-.personal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 5px 0 13px; }
+.personal-summary-header { display: grid; gap: 7px; }
+.personal-overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 16px; margin-top: 20px; }
+.personal-overview-grid .personal-card { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 28px; }
+.personal-overview-grid h3 { margin: 8px 0 0; font-size: 24px; line-height: 1.15; letter-spacing: -.03em; }
+.personal-card-header { min-height: 116px; }
+.personal-card-header p { margin: 8px 0 0; color: var(--ink-muted); font-size: 15px; line-height: 1.5; }
+.personal-card-body { display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); flex: 1; border-top: 1px solid var(--line); }
+.personal-plan .personal-card-body { display: flex; flex-direction: column; }
+.personal-card-row { min-width: 0; padding: 15px 0; border-bottom: 1px solid var(--line); }
+.personal-card-row > strong { display: block; font-size: 15px; line-height: 1.3; }
+.personal-card-row p { margin: 7px 0 0; color: var(--ink-muted); font-size: 14px; line-height: 1.4; }
+.personal-card-row small { display: block; margin-top: 8px; color: var(--ink-muted); font-size: 12px; line-height: 1.4; }
+.personal-card-footer { display: flex; align-items: flex-end; min-height: 56px; padding-top: 15px; }
+.personal-target { padding: 8px 11px; border-radius: var(--radius-control); background: #eaf2eb; color: var(--teal) !important; font-weight: 600; }
+.personal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .personal-chips span { padding: 6px 10px; background: #eaf2eb; border-radius: 8px; font-size: 13px; font-weight: 600; }
-.personal-detail { margin: 6px 0; }
-.personal-fineprint { margin-top: auto; font-size: 12px !important; }
-.dashboard-second-row .plan-card { display: flex; flex-direction: column; align-items: flex-start; min-height: 215px; }
-.dashboard-second-row .plan-card h2 { margin: 10px 0; }
-.dashboard-second-row .plan-card .outline-button { margin-top: auto; }
+.personal-plan-steps { display: grid; grid-auto-rows: minmax(0, 1fr); flex: 1; list-style: none; margin: 0; padding: 0; }
+.personal-plan-steps li { min-width: 0; }
+.plan-check-label { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; font-size: 15px; line-height: 1.3; }
+.plan-check-label input { width: 19px; height: 19px; margin: 0; flex: none; accent-color: var(--teal); cursor: pointer; }
+.plan-check-label strong { font-weight: 700; }
+.personal-plan-steps li p, .personal-plan-steps li small { margin-left: 31px; }
+.personal-plan-steps li.is-done .plan-check-label strong { text-decoration: line-through; text-decoration-color: var(--ink-muted); }
+.plan-progress { margin: 0; padding: 10px 0; color: var(--ink-muted); font-size: 13px; }
+.plan-data-note { display: block; margin-top: 14px; color: var(--ink-muted); font-size: 12px; line-height: 1.4; }
+.plan-save-error { color: #a64238; font-size: 13px; }
 .example-section { margin-top: 52px; padding-top: 27px; border-top: 1px solid var(--line); }
-.example-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.example-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .example-heading h2 { font-size: 29px; line-height: 1.1; margin: 8px 0 0; }
 .example-heading p { max-width: 290px; color: var(--ink-muted); font-size: 14px; margin: 0; }
 .example-section .metric-grid { margin-top: 18px; }
@@ -65,12 +98,14 @@
 
 @media (max-width: 760px) {
   .onboarding-card { margin-top: 25px; padding: 27px 22px; }
-  .onboarding-options, .dashboard-personal-grid, .example-section .dashboard-grid { grid-template-columns: 1fr; }
+  .onboarding-options, .personal-overview-grid, .example-section .dashboard-grid { grid-template-columns: 1fr; }
   .onboarding-header > span:last-child { display: none; }
   .onboarding-target { flex-direction: column; }
   .onboarding-target input { width: 100%; }
   .onboarding-actions { flex-wrap: wrap; }
+  .plan-hero { padding-top: 35px; }
+  .plan-actions-footer { align-items: flex-start; flex-direction: column; gap: 18px; }
   .example-heading { display: block; }
   .example-heading p { margin-top: 10px; }
-  .personal-summary-header { align-items: start; flex-direction: column; }
+  .personal-card-header { min-height: 0; padding-bottom: 22px; }
 }

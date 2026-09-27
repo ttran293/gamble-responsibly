@@ -1,6 +1,9 @@
 import { day, shiftDay, summarize, type Snapshot } from "./core";
 
-export type ActivityInsight = { id:string; accounts:string; title:string; text:string; from:string; to:string };
+export type InsightSignal =
+  | { kind:"frequency_stake_change"; currentBets:number; baselineBetsPerDay:number; currentMedianCashStake:number; baselineMedianCashStake:number; baselineFrom:string; baselineTo:string }
+  | { kind:"period_comparison"; metric:"activeDays"|"cashWagered"; current:number; previous:number; previousFrom:string; previousTo:string };
+export type ActivityInsight = { id:string; accounts:string; title:string; text:string; from:string; to:string; signal:InsightSignal };
 const money = (n:number) => new Intl.NumberFormat("en-US", {style:"currency",currency:"USD"}).format(n/100);
 const median = (values:number[]) => { const v=[...values].sort((a,b)=>a-b), i=Math.floor(v.length/2); return v.length%2?v[i]:(v[i-1]+v[i])/2; };
 
@@ -28,14 +31,15 @@ export function activityInsights(snapshot:Snapshot, from:string, to:string) {
     const average=history.length/activeDays;
     if(current.length>=Math.max(average*2,average+3)&&currentStake>=Math.max(typical*2,typical+500)) {
       anomalies.push({accounts,id:`change:${accounts}:${date}`,title:"A change in your recorded activity",from:date,to:date,
-        text:`On ${date}, you placed ${current.length} bets with a median cash stake of ${money(currentStake)}. During ${priorFrom}–${priorTo}, you averaged ${Number(average.toFixed(1))} bets per betting day, with a median cash stake of ${money(typical)}.`});
+        text:`On ${date}, you placed ${current.length} bets with a median cash stake of ${money(currentStake)}. During ${priorFrom}–${priorTo}, you averaged ${Number(average.toFixed(1))} bets per betting day, with a median cash stake of ${money(typical)}.`,
+        signal:{kind:"frequency_stake_change",currentBets:current.length,baselineBetsPerDay:average,currentMedianCashStake:currentStake,baselineMedianCashStake:typical,baselineFrom:priorFrom,baselineTo:priorTo}});
     }
   }
   const comparisons:ActivityInsight[]=[];
   if(metrics.comparison) {
     const p=metrics.comparison, id=`${accounts}:${from}:${to}`;
-    comparisons.push({accounts,id:`days:${id}`,title:"Betting days",from,to,text:`You recorded bets on ${metrics.activeDays} days, compared with ${p.activeDays} during ${p.from}–${p.to}. Both periods cover ${metrics.days} days.`});
-    comparisons.push({accounts,id:`stakes:${id}`,title:"Cash wagered",from,to,text:`You wagered ${money(metrics.cashWagered)} in cash, compared with ${money(p.cashStake)} during ${p.from}–${p.to}. Cash stakes are money put into bets, not money lost.`});
+    comparisons.push({accounts,id:`days:${id}`,title:"Betting days",from,to,text:`You recorded bets on ${metrics.activeDays} days, compared with ${p.activeDays} during ${p.from}–${p.to}. Both periods cover ${metrics.days} days.`,signal:{kind:"period_comparison",metric:"activeDays",current:metrics.activeDays,previous:p.activeDays,previousFrom:p.from,previousTo:p.to}});
+    comparisons.push({accounts,id:`stakes:${id}`,title:"Cash wagered",from,to,text:`You wagered ${money(metrics.cashWagered)} in cash, compared with ${money(p.cashStake)} during ${p.from}–${p.to}. Cash stakes are money put into bets, not money lost.`,signal:{kind:"period_comparison",metric:"cashWagered",current:metrics.cashWagered,previous:p.cashStake,previousFrom:p.from,previousTo:p.to}});
   }
   // Also check each selected account so an account-specific change is not
   // hidden by another account's larger usual stakes.

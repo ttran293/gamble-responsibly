@@ -11,7 +11,7 @@ export async function GET() {
   catch{return Response.json({error:"Saved guardrails are unavailable. Check the database migration and covered demo files."},{status:503});}
 }
 export async function POST(request:Request) {
-  if(request.headers.get("origin")!==new URL(process.env.APP_URL??request.url).origin)return Response.json({error:"Invalid request origin."},{status:403});
+  if(request.headers.get("origin")!==new URL(request.url).origin)return Response.json({error:"Invalid request origin."},{status:403});
   const session=await auth.api.getSession({headers:await headers()});
   if(!session)return Response.json({error:"Sign in to save guardrails."},{status:401});
   const parsed=changeSchema.safeParse(await request.json().catch(()=>null));

@@ -1,4 +1,4 @@
-import { boolean, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import type { OnboardingAnswers } from "../lib/onboarding";
 
 // Better Auth core schema. The explicit column names keep the adapter and
@@ -41,3 +41,9 @@ export const guardrailState = pgTable("guardrail_state", {
   notices: jsonb("notices").notNull().default([]),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
 });
+
+export const planActionCompletions = pgTable("plan_action_completions", {
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  actionId: text("action_id").notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }).defaultNow().notNull()
+}, table => [primaryKey({ columns: [table.userId, table.actionId] })]);

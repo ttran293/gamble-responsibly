@@ -1,53 +1,84 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   focusOptions, frequencyOptions, goalOptions,
-  labelFor, pauseActionOptions, triggerOptions, type OnboardingAnswers
+  labelFor, triggerOptions, type OnboardingAnswers
 } from "../lib/onboarding";
+import { recommendedPlan } from "../lib/recommended-plan";
+import type { Snapshot } from "../lib/metrics/core";
 
-const goalDetails: Record<OnboardingAnswers["goal"], string> = {
-  stay: "Set commitments and review recorded activity against your limits.",
-  reduce: "You can work toward a smaller amount or fewer betting days, at your own pace.",
-  stop: "You chose to stop betting. Your plan can help you decide what to do when an urge arrives.",
-  understand: "Start by seeing your betting activity and spending clearly. You can choose another goal later.",
-  unsure: "You don't have to decide on a goal yet. Start with what you'd like to keep track of."
-};
-
-function pauseDescription(answers: OnboardingAnswers) {
-  if (answers.pauseAction === "custom") return answers.customPauseAction || "Your own pause action";
-  if (answers.pauseAction) return labelFor(pauseActionOptions, answers.pauseAction);
-  return "You can choose a pause action whenever you're ready.";
-}
-
-function goalTarget(answers: OnboardingAnswers) {
-  if (answers.goal === "reduce" && answers.reduceTarget) {
-    return answers.reduceTarget.kind === "days_per_week"
-      ? `Your target: ${answers.reduceTarget.value} betting ${answers.reduceTarget.value === 1 ? "day" : "days"} per week.`
-      : `Your target: up to $${answers.reduceTarget.value.toLocaleString()} in weekly cash wagers.`;
-  }
-  if (answers.goal === "stop" && answers.stopDate) return `Your start date: ${answers.stopDate}.`;
-  return null;
-}
-
-export function PersonalSummary({ answers, emailVerified }: { answers: OnboardingAnswers; emailVerified: boolean }) {
-  const [pauseOpen, setPauseOpen] = useState(false);
+export function PersonalSummary({ answers, detailed = false, snapshot }: { answers: OnboardingAnswers; detailed?: boolean; snapshot?: Snapshot | null }) {
   const focus = answers.focusAreas.map((value) => labelFor(focusOptions, value));
   const triggers = answers.triggers.map((value) => labelFor(triggerOptions, value));
-  const target = goalTarget(answers);
+  const goalOption = goalOptions.find((option) => option.value === answers.goal);
+  const plan = recommendedPlan(answers, snapshot);
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/plan/actions", { cache: "no-store" }).then(async response => {
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error ?? "Could not load your checklist.");
+      if (!cancelled) setCompleted(body.completed);
+    }).catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : "Could not load your checklist."); })
+      .finally(() => { if (!cancelled) setLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
+  async function toggle(actionId: string, checked: boolean) {
+    setSaving(actionId); setError("");
+    try {
+      const response = await fetch("/api/plan/actions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actionId, completed: checked }) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error ?? "Could not save this item.");
+      setCompleted(current => checked ? [...new Set([...current, actionId])] : current.filter(id => id !== actionId));
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not save this item."); }
+    finally { setSaving(null); }
+  }
+  const done = plan.actions.filter(action => completed.includes(action.id)).length;
 
-  return <section className="personal-summary" aria-label="Your onboarding choices">
-    {!emailVerified && <div className="verification-banner"><div><strong>Protect this space</strong><br />Check your email to verify your account. You can keep using Jelly now.</div></div>}
-    <div className="personal-summary-header"><div><span className="eyebrow">Based on your answers</span><h2>Your starting point</h2></div><button className="urge-button" onClick={() => setPauseOpen(true)}><span className="urge-dot"></span>I feel like gambling <b>→</b></button></div>
-    <div className="dashboard-personal-grid">
-      <article className="panel personal-card"><span className="eyebrow">Your direction</span><h2>{labelFor(goalOptions, answers.goal)}</h2><p>{goalDetails[answers.goal]}</p>{target && <p className="personal-target">{target}</p>}<Link className="text-link" href="/guardrails">Set goal and guardrails →</Link></article>
-      <article className="panel personal-card"><span className="eyebrow">What matters to you</span><h2>Your focus</h2>{focus.length ? <div className="personal-chips">{focus.map((label) => <span key={label}>{label}</span>)}</div> : <p>You can choose what to focus on whenever you're ready.</p>}{answers.frequency && <p className="personal-detail"><strong>Current pace:</strong> {labelFor(frequencyOptions, answers.frequency)}</p>}</article>
+  return <section className="personal-summary" aria-label="Your goal and plan">
+    <div className="personal-overview-grid">
+      <article className="panel personal-card personal-goal">
+        <div className="personal-card-header">
+          <span className="eyebrow">Your Goal</span>
+          <h3>{goalOption?.label ?? "Choose a goal"}</h3>
+          <p>{goalOption?.description ?? "Choose whether you want to stay within limits, reduce gambling, or stop gambling."}</p>
+        </div>
+        <div className="personal-card-body">
+          <div className="personal-card-row">
+            <strong>What matters to you</strong>
+            {focus.length ? <div className="personal-chips">{focus.map((label) => <span key={label}>{label}</span>)}</div> : <p>You can choose what to focus on whenever you're ready.</p>}
+          </div>
+          <div className="personal-card-row">
+            <strong>Current pace</strong>
+            <p>{answers.frequency ? labelFor(frequencyOptions, answers.frequency) : "Add this whenever you're ready."}</p>
+          </div>
+          <div className="personal-card-row">
+            <strong>Moments to notice</strong>
+            <p>{triggers.length ? triggers.join(", ") : "Watch for patterns as you track."}</p>
+            <small>These are your choices, not a diagnosis or prediction.</small>
+          </div>
+        </div>
+        <div className="personal-card-footer"><Link className="text-link" href="/onboarding">Change my goal →</Link></div>
+      </article>
+      <article className="panel personal-card personal-plan">
+        <div className="personal-card-header">
+          <span className="eyebrow">Your Plan</span>
+          <h3>Actions for your goal</h3>
+          <p>{plan.evidence ? "Actions shaped by your goal and recorded activity." : "Actions shaped by your goal and answers."}</p>
+        </div>
+        <div className="personal-card-body">
+          <p className="plan-progress" aria-live="polite">{loaded ? `${done} of ${plan.actions.length} completed` : "Loading checklist…"}</p>
+          <ol className="personal-plan-steps">{plan.actions.map((action) => <li className={`personal-card-row ${completed.includes(action.id) ? "is-done" : ""}`} key={action.id}><label className="plan-check-label"><input type="checkbox" checked={completed.includes(action.id)} disabled={!loaded || !!saving || !!error} onChange={event => void toggle(action.id, event.target.checked)} /><strong>{action.title}</strong></label><p>{action.detail}</p>{detailed && <small>{action.reason}</small>}</li>)}</ol>
+          <small className="plan-data-note">{plan.dataNote}</small>
+          {error && <p role="alert" className="plan-save-error">{error} <button type="button" className="text-link" onClick={() => { setError(""); setLoaded(false); fetch("/api/plan/actions", { cache: "no-store" }).then(r => r.json().then(body => { if (!r.ok) throw new Error(body.error); setCompleted(body.completed); setLoaded(true); })).catch(() => setError("Checklist is still unavailable.")); }}>Retry</button></p>}
+        </div>
+        <div className="personal-card-footer"><Link href={detailed ? "/dashboard" : "/plan"} className="text-link">{detailed ? "Go to dashboard" : "Review my plan"} →</Link></div>
+      </article>
     </div>
-    <div className="dashboard-personal-grid dashboard-second-row">
-      <article className="plan-card"><span className="eyebrow">Your pause plan</span><h2>When an urge shows up</h2><p>{pauseDescription(answers)}</p><button onClick={() => setPauseOpen(true)} className="outline-button">Review my plan →</button></article>
-      <article className="panel personal-card"><span className="eyebrow">Patterns to notice</span><h2>Your starting points</h2>{triggers.length ? <p>You mentioned: {triggers.join(", ")}.</p> : <p>You can add moments when betting feels more likely, or simply watch for patterns as you track.</p>}<p className="personal-fineprint">These are your choices, not a diagnosis or prediction.</p></article>
-    </div>
-    {pauseOpen && <div className="pause-overlay" onClick={() => setPauseOpen(false)}><section className="pause-card" role="dialog" aria-modal="true" aria-label="Your pause plan" onClick={(event) => event.stopPropagation()}><button className="modal-close" aria-label="Close pause plan" onClick={() => setPauseOpen(false)}>×</button><span className="eyebrow">Your pause plan</span><h2>Pause before deciding.</h2><p>{pauseDescription(answers)}</p><Link className="primary block" href="/onboarding">{answers.pauseAction ? "Change my plan" : "Choose a pause action"}</Link>{answers.pauseAction === "blocking_tools" && <div className="pause-resources"><a href="https://www.ncpgambling.org/help-treatment/" target="_blank" rel="noopener noreferrer">Find help in the United States ↗</a><a href="https://www.gamcare.org.uk/self-help/" target="_blank" rel="noopener noreferrer">Explore tools in the United Kingdom ↗</a></div>}</section></div>}
   </section>;
 }

@@ -36,7 +36,7 @@ export default function JellyApp() {
   return (
     <main>
       <header className="nav">
-        <button className="brand" onClick={() => setView("home")}><img src="/jelly-logo.gif?v=2" alt="" />Jelly</button>
+        <button className="brand" onClick={() => setView("home")}><img src="/jelly-logo.gif?v=3" alt="" />Jelly</button>
         <nav>
           <Link href="/supporter">Send invitation</Link>
           <Link className="nav-cta" href="/sign-in">Log In</Link>
@@ -55,7 +55,7 @@ export default function JellyApp() {
 type Path = "friend" | "tracker";
 
 const friendSteps = [
-  { n: "01", title: "You've noticed a problem", body: "Someone you care about is struggling with gambling, and you want to help." },
+  { n: "01", title: "You're worried about someone", body: "Someone you care about is struggling with gambling, and you want to help." },
   { n: "02", title: "Invite them to track a goal", body: "They can follow their habit and a goal to gamble less, or stop. Joining is their choice." },
   { n: "03", title: "Be there when it gets hard", body: "If they add you as an emergency contact, Jelly lets you know when a streak of not betting breaks, or when they want to bet and want to reach out.", href: "/supporter", action: "Send invitation" }
 ];
@@ -94,13 +94,7 @@ function Home() {
     <section className="hero">
       <h1>Work toward gambling less.</h1>
       <p>Track your own habit, or invite someone you care about and be there if they struggle.</p>
-      <div className="egg">
-        <p><b>Jelly</b> <i>(n.)</i></p>
-        <ol>
-          <li>A frozen state.</li>
-          <li>The little wobble before you bounce back.</li>
-        </ol>
-      </div>
+      <p className="egg"><b>Jelly</b> <i>(n.)</i> The little wobble before you bounce back.</p>
     </section>
     <section className="choice">
       <div className="paths-band" aria-label="Choose your path">

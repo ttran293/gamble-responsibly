@@ -7,12 +7,17 @@ import { db } from "./db";
 import * as schema from "../db/schema";
 
 const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+const localDevelopment = process.env.NODE_ENV !== "production" && ["localhost", "127.0.0.1"].includes(new URL(appUrl).hostname);
+const localOrigins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const auth = betterAuth({
-  baseURL: appUrl,
-  trustedOrigins: [appUrl],
+  // Next can choose port 3001 when 3000 is occupied. Resolve only approved
+  // loopback hosts from each request so redirects and cookies use that port.
+  baseURL: localDevelopment ? { allowedHosts: localOrigins.map(origin => new URL(origin).host), fallback: appUrl, protocol: "http" } : appUrl,
+  trustedOrigins: localDevelopment ? [...new Set([appUrl, ...localOrigins])] : [appUrl],
   database: drizzleAdapter(db, { provider: "pg", schema }),
+  session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
   emailAndPassword: { enabled: true },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {

@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const goalOptions = [
-  { value: "stay", label: "Stay within limits", description: "Set commitments and review your activity." },
-  { value: "reduce", label: "Reduce gambling", description: "Choose a baseline and a specific reduction goal." },
-  { value: "stop", label: "Stop gambling", description: "Choose a stop date and prepare a support plan." }
+  { value: "stay", label: "Stay within limits", description: "Keep betting within boundaries you choose." },
+  { value: "reduce", label: "Reduce gambling", description: "Make space for fewer bets or less spending." },
+  { value: "stop", label: "Stop gambling", description: "Work toward no new bets, with support when you need it." }
 ] as const;
 
 export const focusOptions = [

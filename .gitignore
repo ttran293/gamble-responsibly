@@ -5,6 +5,7 @@
 
 # Next.js build output
 /.next/
+/.next-dev/
 /out/
 
 # Production build output
@@ -33,7 +34,7 @@ pnpm-debug.log*
 next-env.d.ts
 
 # Project-local files not intended for source control
-/GAMBLING_HARM_AWARENESS_APP.md
+/docs/
 /skill/
 
 # Private local demo fixtures
