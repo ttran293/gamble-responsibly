@@ -16,6 +16,7 @@ import { PlanLoadingState } from "./plan-loading-state";
 
 const appNames: Record<DemoConnectionProvider, string> = { draftkings: "DraftKings", fanduel: "FanDuel", moonharbor: "Moonharbor Sports" };
 const appIcons: Record<DemoConnectionProvider, string> = { draftkings: "/draftkings.svg", fanduel: "/fanduel.svg", moonharbor: "/moonharbor.svg" };
+const minimumPlanLoadingMs = 3500;
 
 type Choice = { value: string; label: string; description?: string };
 
@@ -114,6 +115,7 @@ export function OnboardingForm({ initialAnswers, editing, onSaved, onCancel, onS
       setStatus("Choose a valid weekly target, or leave the amount blank.");
       return;
     }
+    const loadingStartedAt = performance.now();
     setSaving(true);
     onSavingChange?.(true);
     setStatus("");
@@ -134,7 +136,13 @@ export function OnboardingForm({ initialAnswers, editing, onSaved, onCancel, onS
         return;
       }
       if (onSaved) onSaved(answers);
-      else window.location.assign("/plan");
+      else {
+        const remainingLoadingMs = minimumPlanLoadingMs - (performance.now() - loadingStartedAt);
+        if (remainingLoadingMs > 0) {
+          await new Promise(resolve => window.setTimeout(resolve, remainingLoadingMs));
+        }
+        window.location.assign("/plan");
+      }
     } catch {
       setStatus("We could not save your answers. Check your connection and try again.");
       setSaving(false);

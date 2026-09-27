@@ -80,7 +80,7 @@ function extendDemoHistory(provider: Provider, version: DemoVersion, bets: Bet[]
     if (index === 0) add(`${prefix}_deposit`, `${date}T14:00:00.000Z`, "deposit", 8000);
     add(`${prefix}_wager`, placedAt, "wager", -stake, `${prefix}_bet`);
     if (payout) add(`${prefix}_payout`, settledAt, "payout", payout, `${prefix}_bet`);
-    bets.push({ id: `${prefix}_bet`, placedAt, settledAt, status: payout ? "won" : "lost", stake, cashStake: stake, bonusStake: 0, payout, refund: 0, wagerId: `${prefix}_wager` });
+    bets.push({ id: `${prefix}_bet`, placedAt, settledAt, sport: ["Football", "Soccer", "Baseball", "Hockey", "Basketball"][index], status: payout ? "won" : "lost", stake, cashStake: stake, bonusStake: 0, payout, refund: 0, wagerId: `${prefix}_wager` });
   });
 }
 
@@ -89,7 +89,8 @@ export async function loadFixture(provider: Provider = "draftkings", version: De
   const root = path.join(process.cwd(), "data", `${version}_demo`, provider);
   const [b, t] = await Promise.all(["bets", "transactions"].map(async kind => parseCsv(await readFile(path.join(root, `${version}_${provider}_connected_${kind}.csv`), "utf8"))));
   checkRows(b, "bet_id", provider, version); checkRows(t, provider === "fanduel" ? "entry_id" : "transaction_id", provider, version);
-  const bets: Bet[] = b.map(r => ({ id: r.bet_id, placedAt: timestamp(r.placed_at), settledAt: r.settled_at ? timestamp(r.settled_at) : null, status: r.status, stake: money(r,"stake_minor"), cashStake: money(r,"cash_stake_minor"), bonusStake: money(r,"bonus_stake_minor"), payout: money(r,"payout_minor"), refund: money(r,"refund_minor"), wagerId: provider === "fanduel" ? r.wager_entry_id : r.wager_transaction_id }));
+  if (b.some(row => !row.sport?.trim())) throw new Error("Demo bet is missing its sport.");
+  const bets: Bet[] = b.map(r => ({ id: r.bet_id, placedAt: timestamp(r.placed_at), settledAt: r.settled_at ? timestamp(r.settled_at) : null, sport: r.sport.trim(), status: r.status, stake: money(r,"stake_minor"), cashStake: money(r,"cash_stake_minor"), bonusStake: money(r,"bonus_stake_minor"), payout: money(r,"payout_minor"), refund: money(r,"refund_minor"), wagerId: provider === "fanduel" ? r.wager_entry_id : r.wager_transaction_id }));
   const transactions: Transaction[] = t.map(r => ({ id: provider === "fanduel" ? r.entry_id : r.transaction_id, provider: provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings", at: timestamp(r.timestamp), type: r.type, cash: money(r,"amount_minor"), bonus: provider === "moonharbor" ? 0 : money(r,"bonus_amount_minor"), balance: money(r,"balance_after_minor"), bonusBalance: provider === "moonharbor" ? 0 : money(r,"bonus_balance_after_minor"), betId: r.bet_id, description: r.description })).sort((a,b) => a.at.localeCompare(b.at));
   const byId = new Map(transactions.map(t => [t.id,t]));
   const used = new Set<string>();

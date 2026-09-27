@@ -20,7 +20,7 @@ export default async function PlanPage() {
   if (!profile?.completedAt || !parsed.success || !["stay", "reduce", "stop"].includes(parsed.data.goal)) redirect("/onboarding");
 
   return <main className="onboarding-shell plan-shell">
-    <header className="onboarding-header"><Link className="brand" href="/dashboard"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</Link><div className="session-links"><Link href="/dashboard">Dashboard →</Link><SignOutButton /></div></header>
+    <header className="onboarding-header"><Link className="brand" href="/dashboard"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</Link><div className="session-links"><SignOutButton /></div></header>
     <PlanContent answers={parsed.data} />
   </main>;
 }

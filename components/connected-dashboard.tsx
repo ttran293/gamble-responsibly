@@ -23,6 +23,7 @@ export function ConnectedDashboard({ name = "Demo", demo = false, signedIn = fal
   const [storageError, setStorageError] = useState(false);
   const [emptyTab, setEmptyTab] = useState<"connections" | "resources">("connections");
   const requestId = useRef(0);
+  const missingSportRetry = useRef("");
   const publicPreview = demo && !signedIn;
 
   async function loadVersion(next: DemoVersion, persist = true, providersToLoad = connectedProviders) {
@@ -42,6 +43,7 @@ export function ConnectedDashboard({ name = "Demo", demo = false, signedIn = fal
       }));
       if (requestId.current !== currentRequest) return;
       const loaded = Object.fromEntries(entries) as Partial<Record<Provider, Snapshot>>;
+      if (entries.some(([, snapshot]) => snapshot.bets.some(bet => !bet.sport?.trim()))) throw new Error("The demo data is missing sport labels. Reload the page to reconnect.");
       combineSnapshots(providersToLoad.map(provider => loaded[provider]!));
       setSnapshots(loaded);
       if (persist) {
@@ -66,6 +68,16 @@ export function ConnectedDashboard({ name = "Demo", demo = false, signedIn = fal
     setReady(true);
     return () => { requestId.current++; };
   }, []);
+
+  // A fast refresh can preserve snapshots fetched before sport metadata was added.
+  useEffect(() => {
+    if (!version || !snapshots || !connectedProviders.length) return;
+    if (!connectedProviders.some(provider => snapshots[provider]?.bets.some(bet => !bet.sport?.trim()))) return;
+    const selection = `${version}:${connectedProviders.join(",")}`;
+    if (missingSportRetry.current === selection) return;
+    missingSportRetry.current = selection;
+    void loadVersion(version, false, connectedProviders);
+  }, [version, snapshots, connectedProviders]);
 
   const versionButtons = <div className="demo-version-buttons" role="group" aria-label="Demo data version">
     {(["v1", "v2"] as const).map(option => <button key={option} type="button" className={version === option && snapshots ? "primary" : "outline"} aria-pressed={version === option && !!snapshots} onClick={() => { const providers = [...demoConnectionProviders]; setConnectedProviders(providers); void loadVersion(option, true, providers); }}>Connect to demo data {option}</button>)}

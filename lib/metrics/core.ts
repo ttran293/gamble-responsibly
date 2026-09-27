@@ -1,4 +1,4 @@
-export type Bet = { provider?: string; id: string; placedAt: string; settledAt: string | null; status: string; stake: number; cashStake: number; bonusStake: number; payout: number; refund: number; wagerId: string };
+export type Bet = { provider?: string; id: string; placedAt: string; settledAt: string | null; sport?: string; status: string; stake: number; cashStake: number; bonusStake: number; payout: number; refund: number; wagerId: string };
 export type Transaction = { provider?: string; id: string; at: string; type: string; cash: number; bonus: number; balance: number; bonusBalance: number; betId: string; description: string };
 export type Snapshot = { supplemental?: { promotions: number; statements: number }; coverage?: { provider: string; from: string; through: string }[]; bets: Bet[]; transactions: Transaction[]; loadedAt: string; from: string; through: string; provider: string; mode: "demo" };
 export const day = (at: string) => at.slice(0, 10);

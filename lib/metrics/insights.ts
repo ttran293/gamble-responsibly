@@ -1,9 +1,11 @@
 import { formatDay } from "../format-date";
 import { day, shiftDay, summarize, type Snapshot } from "./core";
+import { sportBreakdown } from "./sports";
 
 export type InsightSignal =
   | { kind:"frequency_stake_change"; currentBets:number; baselineBetsPerDay:number; currentMedianCashStake:number; baselineMedianCashStake:number; baselineFrom:string; baselineTo:string }
-  | { kind:"period_comparison"; metric:"activeDays"|"cashWagered"; current:number; previous:number; previousFrom:string; previousTo:string };
+  | { kind:"period_comparison"; metric:"activeDays"|"cashWagered"; current:number; previous:number; previousFrom:string; previousTo:string }
+  | { kind:"sport_frequency"; sports:string[]; count:number; totalBets:number };
 export type ActivityInsight = { id:string; accounts:string; title:string; text:string; from:string; to:string; signal:InsightSignal };
 const money = (n:number) => new Intl.NumberFormat("en-US", {style:"currency",currency:"USD"}).format(n/100);
 const median = (values:number[]) => { const v=[...values].sort((a,b)=>a-b), i=Math.floor(v.length/2); return v.length%2?v[i]:(v[i-1]+v[i])/2; };
@@ -37,6 +39,16 @@ export function activityInsights(snapshot:Snapshot, from:string, to:string) {
     }
   }
   const comparisons:ActivityInsight[]=[];
+  const sportInsights:ActivityInsight[]=[];
+  const sports=sportBreakdown(metrics.bets);
+  if(sports.length && !sports.some(item=>item.sport==="Unknown")) {
+    const leaders=sports.filter(item=>item.count===sports[0].count);
+    const names=leaders.map(item=>item.sport);
+    const share=Math.round(sports[0].count/metrics.betCount*100);
+    sportInsights.push({accounts,id:`sports:${accounts}:${from}:${to}`,title:leaders.length===1?"The sport behind most bets":"Sports tied for most bets",from,to,
+      text:`${names.join(", ")} ${leaders.length===1?"accounted":"each accounted"} for ${sports[0].count} of ${metrics.betCount} bets (${share}%) in this period. Sports can still be enjoyable with fewer or no bets. Before watching, notice the thought or feeling that makes a bet seem necessary. If it feels manageable, try following one game without betting, then compare the experience with what you expected.`,
+      signal:{kind:"sport_frequency",sports:names,count:sports[0].count,totalBets:metrics.betCount}});
+  }
   if(metrics.comparison) {
     const p=metrics.comparison, id=`${accounts}:${from}:${to}`;
     comparisons.push({accounts,id:`days:${id}`,title:"Betting days",from,to,text:`You recorded bets on ${metrics.activeDays} days, compared with ${p.activeDays} during ${formatDay(p.from)}–${formatDay(p.to)}. Both periods cover ${metrics.days} days.`,signal:{kind:"period_comparison",metric:"activeDays",current:metrics.activeDays,previous:p.activeDays,previousFrom:p.from,previousTo:p.to}});
@@ -51,5 +63,5 @@ export function activityInsights(snapshot:Snapshot, from:string, to:string) {
     const result=activityInsights(account,accountFrom,accountTo);
     anomalies.push(...result.anomalies);
   }
-  return {accounts,anomalies:anomalies.sort((a,b)=>b.from.localeCompare(a.from)),comparisons,eligibleDays};
+  return {accounts,anomalies:anomalies.sort((a,b)=>b.from.localeCompare(a.from)),comparisons,sportInsights,eligibleDays};
 }

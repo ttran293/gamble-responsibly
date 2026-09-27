@@ -38,6 +38,18 @@ test('Moonharbor demonstrates a joint change independently and across accounts',
  const all=activityInsights(combined,'2026-08-01','2026-08-19');assert.ok(all.anomalies.some(c=>c.from==='2026-08-12'));
 });
 
+test('sport insight names the leading sport from the selected bets and offers a CBT-style reflection',async()=>{
+ const combined=combineSnapshots(await Promise.all(['draftkings','fanduel','moonharbor'].map(provider=>loadFixture(provider))));
+ const result=activityInsights(combined,'2026-07-15','2026-09-27');
+ const insight=result.sportInsights[0];
+ assert.deepEqual(insight.signal,{kind:'sport_frequency',sports:['Basketball'],count:56,totalBets:196});
+ assert.match(insight.text,/Basketball accounted for 56 of 196 bets/);
+ assert.match(insight.text,/thought or feeling/);
+ assert.match(insight.text,/without betting/);
+ const narrow=activityInsights(combined,'2026-08-12','2026-08-12').sportInsights[0];
+ assert.equal(narrow.signal.totalBets,combined.bets.filter(b=>b.placedAt.slice(0,10)==='2026-08-12').length);
+});
+
 require.extensions['.tsx']=require.extensions['.ts'];
 const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
@@ -46,6 +58,12 @@ const {defaultPlan}=require('../lib/guardrails/model.ts');
 test('cards are capped at three and show account-specific coverage',()=>{
  const s=fixture();const html=renderToStaticMarkup(React.createElement(ActivityInsights,{snapshot:s,from:'2026-08-08',to:'2026-08-08',demo:true,review:()=>{}}));
  assert.equal((html.match(/<article/g)||[]).length,3);assert.match(html,/A change in your recorded activity/);assert.match(html,/Test · Aug 8, 26 UTC/);
+});
+test('sport insight appears as a separate Jelly card',async()=>{
+ const combined=combineSnapshots(await Promise.all(['draftkings','fanduel','moonharbor'].map(provider=>loadFixture(provider))));
+ const html=renderToStaticMarkup(React.createElement(ActivityInsights,{snapshot:combined,from:'2026-07-15',to:'2026-09-27',demo:true,review:()=>{}}));
+ assert.match(html,/The sport behind most bets/);
+ assert.match(html,/Basketball accounted for 56 of 196 bets/);
 });
 test('stop goal replaces financial comparisons with saved plan progress',()=>{
  const s=fixture(),plan=defaultPlan('stop','2026-08-01');

@@ -32,8 +32,10 @@ export function ActivityInsights({snapshot,from,to,demo,saved,review}:{snapshot:
   if(plan?.goal!=="stop") {
     const anomaly=insights.anomalies.find(c=>!dismissed.includes(c.id));
     if(anomaly)cards.push({...anomaly,coverage:`${anomaly.accounts} · ${formatDay(anomaly.from)} UTC`});
+    cards.push(...insights.sportInsights.map(c=>({...c,coverage:`${insights.accounts} · ${formatDay(from)}–${formatDay(to)} UTC`})));
     cards.push(...insights.comparisons.map(c=>({...c,coverage:`${insights.accounts} · ${formatDay(from)}–${formatDay(to)} UTC`})));
   }
+  else cards.push(...insights.sportInsights.map(c=>({...c,coverage:`${insights.accounts} · ${formatDay(from)}–${formatDay(to)} UTC`})));
   const visible=cards.filter(c=>!dismissed.includes(c.id)).slice(0,3);
   return <section className="panel activity-insights" aria-labelledby="activity-insights-title">
     <p className="eyebrow">Activity insights</p><h2 id="activity-insights-title">What Jelly noticed</h2>
