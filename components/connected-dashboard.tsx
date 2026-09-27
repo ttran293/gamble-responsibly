@@ -1,106 +1,114 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { demoConnectionsToLoad, saveDemoConnections, type DemoConnectionProvider } from "../lib/demo-connections";
+import { demoConnectionProviders, savedDemoProviders, savedDemoVersion, saveDemoProviders, saveDemoVersion, type DemoConnectionProvider, type DemoVersion } from "../lib/demo-connections";
 import { combineSnapshots, type Snapshot } from "../lib/metrics/core";
 import type { OnboardingAnswers } from "../lib/onboarding";
-import { PrivateDashboard } from "./private-dashboard";
+import { DashboardResources, PrivateDashboard } from "./private-dashboard";
+import { EmergencyContactCard } from "./emergency-contact-card";
 import { PersonalSummary } from "./personal-summary";
 import { SignOutButton } from "./sign-out-button";
 
 type Provider = DemoConnectionProvider;
-type Connection = { status: "disconnected" | "connecting" | "connected" | "error"; snapshot?: Snapshot; error?: string };
-const providers: Provider[] = ["draftkings", "fanduel", "moonharbor"];
-const names = { draftkings: "DraftKings", fanduel: "FanDuel", moonharbor: "Moonharbor Sports (fictional)" };
-const logos = { draftkings: "/draftkings.svg", fanduel: "/fanduel.svg", moonharbor: "/moonharbor.svg" };
-const initial = (): Record<Provider, Connection> => ({ draftkings: {status:"disconnected"}, fanduel: {status:"disconnected"}, moonharbor: {status:"disconnected"} });
+const names: Record<Provider, string> = { draftkings: "DraftKings", fanduel: "FanDuel", moonharbor: "Moonharbor Sports" };
+const icons: Record<Provider, string> = { draftkings: "/draftkings.svg", fanduel: "/fanduel.svg", moonharbor: "/moonharbor.svg" };
 
-export function ConnectedDashboard({ screen = "dashboard", name = "Demo", demo = false, signedIn = false, answers }: { screen?: "dashboard" | "connections"; name?: string; demo?: boolean; signedIn?: boolean; answers?: OnboardingAnswers }) {
-  const [connections, setConnections] = useState(initial);
+export function ConnectedDashboard({ name = "Demo", demo = false, signedIn = false, answers }: { name?: string; demo?: boolean; signedIn?: boolean; answers?: OnboardingAnswers }) {
+  const [version, setVersion] = useState<DemoVersion | null>(null);
+  const [connectedProviders, setConnectedProviders] = useState<Provider[]>([]);
+  const [snapshots, setSnapshots] = useState<Partial<Record<Provider, Snapshot>> | null>(null);
   const [ready, setReady] = useState(false);
-  const [selected, setSelected] = useState("all");
-  const [failNext, setFailNext] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [storageError, setStorageError] = useState(false);
-  const busy = useRef(new Set<Provider>());
+  const [emptyTab, setEmptyTab] = useState<"connections" | "resources">("connections");
+  const requestId = useRef(0);
+  const publicPreview = demo && !signedIn;
 
-  useEffect(() => {
-    let cancelled = false;
-    async function restore() {
-      let saved: Provider[] = [];
-      try { saved = demoConnectionsToLoad(!demo); }
-      catch { setStorageError(true); }
-      const restored = initial();
-      await Promise.all(saved.map(async p => {
-        try { const response = await fetch(`/api/demo/connections/${p}`, {method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"}); const body=await response.json(); if(!response.ok) throw new Error(body.error); restored[p]={status:"connected",snapshot:body}; }
-        catch { restored[p]={status:"error",error:"Could not restore the demo connection. Retry below."}; }
-      }));
-      if (!cancelled) { setConnections(restored); setReady(true); }
-    }
-    void restore();
-    return ()=>{cancelled=true;};
-  }, [demo]);
-  useEffect(() => {
-    if(!ready) return;
-    try { saveDemoConnections(providers.filter(p=>connections[p].snapshot), !demo && providers.every(p=>connections[p].status!=="error")); }
-    catch { setStorageError(true); }
-  },[connections,ready,demo]);
-
-  async function connect(provider: Provider) {
-    if(busy.current.has(provider)) return;
-    busy.current.add(provider);
-    const simulateFailure = failNext; setFailNext(false);
-    setConnections(c=>({...c,[provider]:{...c[provider],status:"connecting",error:undefined}}));
+  async function loadVersion(next: DemoVersion, persist = true, providersToLoad = connectedProviders) {
+    const currentRequest = ++requestId.current;
+    setVersion(next);
+    setSnapshots(null);
+    setError("");
+    setLoading(true);
     try {
-      // Deliberate latency makes the simulated connecting state visible.
-      const [response] = await Promise.all([fetch(`/api/demo/connections/${provider}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({simulateFailure})}),new Promise(resolve=>setTimeout(resolve,650))]);
-      const body=await response.json(); if(!response.ok) throw new Error(body.error ?? "Demo connection failed.");
-      setConnections(c=>({...c,[provider]:{status:"connected",snapshot:body}}));
-    } catch(error) { setConnections(c=>({...c,[provider]:{...c[provider],status:"error",error:error instanceof Error ? error.message : "Connection failed. Retry."}})); }
-    finally { busy.current.delete(provider); }
+      const entries = await Promise.all(providersToLoad.map(async provider => {
+        const response = await fetch(`/api/demo/connections/${provider}`, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ version: next })
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error ?? `Could not load ${names[provider]} demo data.`);
+        return [provider, body as Snapshot] as const;
+      }));
+      if (requestId.current !== currentRequest) return;
+      const loaded = Object.fromEntries(entries) as Partial<Record<Provider, Snapshot>>;
+      combineSnapshots(providersToLoad.map(provider => loaded[provider]!));
+      setSnapshots(loaded);
+      if (persist) {
+        try { saveDemoVersion(next); saveDemoProviders(providersToLoad); } catch { setStorageError(true); }
+      }
+    } catch (cause) {
+      if (requestId.current === currentRequest) setError(cause instanceof Error ? cause.message : "Could not load demo data.");
+    } finally {
+      if (requestId.current === currentRequest) setLoading(false);
+    }
   }
-  function disconnect(provider: Provider) { setConnections(c=>({...c,[provider]:{status:"disconnected"}}));setSelected("all"); }
-  const connected = providers.filter(p=>connections[p].snapshot);
-  const filtered = selected === "all" ? connected : connected.filter(p=>p===selected);
-  const active = filtered.map(p=>connections[p].snapshot!);
-  const snapshot = active.length ? combineSnapshots(active) : null;
-  const planSnapshot = connected.length ? combineSnapshots(connected.map(p => connections[p].snapshot!)) : null;
-  const manager = <section className="panel account-manager">
-    <p className="eyebrow">Demo connection · Synthetic data</p><h1>Connect accounts</h1>
-    <p>Explore a combined view of simulated sportsbook accounts. No credentials, live APIs, or bank access are used.</p>
-    {!ready && <p role="status">Restoring demo connections…</p>}
-    {storageError && <p role="status">Browser storage is unavailable. Connections will last only until this page is closed.</p>}
-    <div className="account-cards">{providers.map(p=>{const c=connections[p];return <article className="account-card" key={p}>
-      <h2>{names[p]}</h2><p className="account-status" role="status">{c.status === "connecting" ? "Connecting…" : c.status === "connected" ? "Connected · Demo" : c.status === "error" ? "Connection failed" : "Not connected"}</p>
-      {c.snapshot && <><p>{c.snapshot.bets.length} bets · {c.snapshot.transactions.length} ledger entries</p><small>History: {c.snapshot.from}–{c.snapshot.through.slice(0,10)} UTC</small><small>Loaded: {new Date(c.snapshot.loadedAt).toLocaleString("en-US",{timeZone:"UTC"})} UTC</small>{c.snapshot.supplemental && <small>{c.snapshot.supplemental.promotions} promotions and {c.snapshot.supplemental.statements} statements validated; not added again to cash totals.</small>}</>}
-      {c.error && <p role="alert">{c.error}{c.snapshot ? " Previous data is retained and may be stale." : ""}</p>}
-      <div className="account-actions"><button className="primary" disabled={!ready||c.status==="connecting"} onClick={()=>void connect(p)}>{c.status==="connecting"?"Loading…":c.status==="error"?"Retry":c.snapshot?"Reload demo":"Connect demo account"}</button>{c.snapshot&&<button className="text-link" disabled={c.status==="connecting"} onClick={()=>disconnect(p)}>Disconnect</button>}</div>
-    </article>;})}</div>
-    <label className="failure-toggle"><input type="checkbox" checked={failNext} disabled={!ready} onChange={e=>setFailNext(e.target.checked)}/> Simulate a failure on the next connection or reload</label>
-    <p className="fineprint">Connection choices are saved for this browser tab’s demo session. Disconnecting removes an account from the combined view. Reloading replaces its data without duplicating entries.</p>
+
+  useEffect(() => {
+    try {
+      const saved = savedDemoVersion();
+      if (saved) {
+        const savedProviders = savedDemoProviders();
+        setConnectedProviders(savedProviders);
+        void loadVersion(saved, false, savedProviders);
+      }
+    } catch { setStorageError(true); }
+    setReady(true);
+    return () => { requestId.current++; };
+  }, []);
+
+  const versionButtons = <div className="demo-version-buttons" role="group" aria-label="Demo data version">
+    {(["v1", "v2"] as const).map(option => <button key={option} type="button" className={version === option && snapshots ? "primary" : "outline"} aria-pressed={version === option && !!snapshots} onClick={() => { const providers = [...demoConnectionProviders]; setConnectedProviders(providers); void loadVersion(option, true, providers); }}>Connect to demo data {option}</button>)}
+  </div>;
+
+  const connectedApps = <section className="demo-data-controls" aria-label="Connected apps">
+    <div className="connected-apps-header"><p className="eyebrow">{version ? `Synthetic · Demo data ${version === "v1" ? "1" : "2"}` : "Synthetic data"}</p><h2>Connected Apps</h2></div>
+    <div className="connection-tiles" aria-label="App connection status">
+      {demoConnectionProviders.map(provider => <div key={provider} className={`connection-tile is-static ${connectedProviders.includes(provider) ? "is-connected" : ""}`}><span className="connection-tile-icon"><img src={icons[provider]} alt="" /></span><span className="connection-tile-name">{names[provider]}</span><span className="connection-tile-status">{connectedProviders.includes(provider) ? "Connected" : "Not connected"}</span></div>)}
+    </div>
+    {storageError && <p role="status">Browser storage is unavailable. Your selection will last until this page is closed.</p>}
   </section>;
 
-  if(screen==="connections") return <><div className="private-nav"><a className="brand" href="/"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</a><div className="session-links"><a href="/demo">View demo metrics →</a><a href="/dashboard">My dashboard →</a>{signedIn && <SignOutButton />}</div></div><main className="private-dashboard metrics-dashboard">{manager}</main></>;
-  const supported = filtered.filter((p): p is "draftkings" | "fanduel" => p !== "moonharbor");
-  const controls = <>
-    <section className="connected-apps" aria-labelledby="connections-title">
-      <div className="connected-apps-header">
-        <h2 id="connections-title">Connections</h2>
-        <p>Connect an app to explore sample activity. Select a connected app to focus on it, then select it again to see all accounts.</p>
+  if (!snapshots) return <>
+    <div className="private-nav"><a className="brand" href="/"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</a>{publicPreview ? <a href="/sign-in">Sign in</a> : <SignOutButton />}</div>
+    <main className="private-dashboard metrics-dashboard">
+      <section className="welcome-row"><div><p className="eyebrow">Awareness, at your pace</p><h1>{publicPreview ? "Make room for a different habit." : `Hi, ${name}.`}</h1></div></section>
+      {!publicPreview && <EmergencyContactCard />}
+      {!publicPreview && answers && <PersonalSummary answers={answers} />}
+      <div className="dashboard-tabs" role="tablist" aria-label="Dashboard sections">
+        <button type="button" role="tab" disabled aria-selected={false}>Overview</button>
+        <button type="button" role="tab" disabled aria-selected={false}>Activity</button>
+        {(["connections", "resources"] as const).map(tab => <button key={tab} id={`dashboard-tab-${tab}`} type="button" role="tab" aria-selected={emptyTab === tab} aria-controls={`dashboard-panel-${tab}`} tabIndex={emptyTab === tab ? 0 : -1} onClick={() => setEmptyTab(tab)} onKeyDown={event => { if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) { event.preventDefault(); const next = event.key === "Home" ? "connections" : event.key === "End" ? "resources" : tab === "connections" ? "resources" : "connections"; setEmptyTab(next); document.getElementById(`dashboard-tab-${next}`)?.focus(); } }}>{tab === "connections" ? "Connected Apps" : "Resources"}</button>)}
       </div>
-      <p className="connection-tiles-label">Add or view a connection</p>
-      <div className="connection-tiles">{providers.map(p=>{
-        const c=connections[p];
-        const status=c.status==="connecting"?(c.snapshot?"Reloading":"Connecting"):c.status==="error"?(c.snapshot?"Reload failed":"Failed"):c.snapshot?"Connected":"Not connected";
-        const action=c.snapshot?(selected===p?"Show all accounts":`Show ${names[p]} activity`):`Connect ${names[p]}`;
-        return <button type="button" className={`connection-tile ${c.snapshot?"is-connected":""} ${c.status==="error"?"is-error":""} ${selected===p?"is-selected":""}`} key={p} disabled={!ready||c.status==="connecting"} aria-label={`${action}. ${status}.`} aria-pressed={c.snapshot?selected===p:undefined} onClick={()=>c.snapshot?setSelected(current=>current===p?"all":p):void connect(p)}>
-          <span className="connection-tile-icon"><img src={logos[p]} alt="" /></span>
-          <span className="connection-tile-name">{p==="moonharbor"?"Moonharbor":names[p]}</span>
-          <span className="connection-tile-status">{status}</span>
-        </button>;
-      })}<a className="connection-tile connection-manage" href="/connect" aria-label="Manage connections"><span className="connection-tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 5 7 7-7 7" /></svg></span><span className="connection-tile-name">Manage</span></a></div>
-    </section>
-    {providers.filter(p=>connections[p].status==="error").map(p=><p role="alert" key={p}>{names[p]}: {connections[p].error} {connections[p].snapshot?"Showing previously loaded data.":"Not included in metrics."} <a className="text-link" href="/connect">Retry connection</a></p>)}
+      <div className="dashboard-tab-panel" id="dashboard-panel-connections" role="tabpanel" aria-labelledby="dashboard-tab-connections" tabIndex={0} hidden={emptyTab !== "connections"}>
+        {connectedApps}
+        {!publicPreview && <p><a className="text-link" href="/onboarding">Connect demo apps →</a></p>}
+        {publicPreview && <section className="panel demo-version-panel">
+        <p className="eyebrow">Synthetic data</p>
+        <h1>Connect to demo data</h1>
+        <p>Choose a version to view its overview, activity, and resources.</p>
+        {versionButtons}
+        </section>}
+        {!ready && <p role="status">Checking your demo selection…</p>}
+        {loading && <p role="status">Loading demo data {version}…</p>}
+        {error && <p role="alert">{error}</p>}
+      </div>
+      <div className="dashboard-tab-panel" id="dashboard-panel-resources" role="tabpanel" aria-labelledby="dashboard-tab-resources" tabIndex={0} hidden={emptyTab !== "resources"}><DashboardResources /></div>
+    </main>
   </>;
-  if(snapshot) return <PrivateDashboard key={filtered.join(",")} name={name} snapshot={snapshot} planSnapshot={planSnapshot} demo={demo} answers={answers} connectionControls={controls} metricsOnly={supported.length === 0} stopping={supported.length > 0 && !demo && answers?.goal === "stop"}/>;
-  return <><div className="private-nav"><a className="brand" href="/"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</a>{!demo && <div className="session-links"><SignOutButton /></div>}</div><main className="private-dashboard metrics-dashboard">{!demo&&answers&&<PersonalSummary answers={answers}/>}<section className="panel"><h1>{ready?"Connect a demo account to begin":"Loading demo connections…"}</h1><p>Demo connection · Synthetic data</p><p>Connect DraftKings, FanDuel, or fictional Moonharbor to view activity and combined metrics.</p><a className="primary" href="/connect">Connect accounts →</a></section>{ready&&manager}</main></>;
+
+  const all = combineSnapshots(connectedProviders.map(provider => snapshots[provider]!));
+  const moonharborOnly = connectedProviders.length === 1 && connectedProviders[0] === "moonharbor";
+  const connectionPanel = <>{connectedApps}{!publicPreview && <p><a className="text-link" href="/onboarding">Change demo connections →</a></p>}</>;
+  return <PrivateDashboard key={version} name={name} snapshot={all} planSnapshot={all} demo={publicPreview} answers={answers} dataControls={connectionPanel} metricsOnly={moonharborOnly} stopping={!publicPreview && !moonharborOnly && answers?.goal === "stop"} />;
 }

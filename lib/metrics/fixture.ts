@@ -23,16 +23,18 @@ export function money(r: Record<string,string>, key: string) {
   return Number(r[key]);
 }
 export function timestamp(s: string) { if (!s || !/(Z|[+-]\d\d:\d\d)$/.test(s) || !Number.isFinite(Date.parse(s))) throw new Error("Invalid timestamp."); return new Date(s).toISOString(); }
-function checkRows(rows: Record<string,string>[], id: string, provider: Provider) {
+function checkRows(rows: Record<string,string>[], id: string, provider: Provider, version: DemoVersion) {
   if (!rows.length) throw new Error("The demo fixture is empty.");
   const ids = new Set<string>();
+  const accountPrefix = version === "v2" ? "sim_v2_" : "sim_";
   for (const r of rows) {
     if (!r[id] || ids.has(r[id])) throw new Error("Missing or duplicate source ID.");
     ids.add(r[id]);
-    if (r.data_mode !== "demo" || r.source !== "SYNTHETIC" || r.provider !== (provider === "moonharbor" ? "moonharbor_demo" : provider) || r.currency !== "USD" || r.account_id !== (provider === "draftkings" ? "sim_account_001" : provider === "moonharbor" ? "sim_mh_account_001" : "sim_fd_account_001") || r.connection_id !== (provider === "draftkings" ? "sim_connection_001" : provider === "moonharbor" ? "sim_mh_connection_001" : "sim_fd_connection_001")) throw new Error("Only the supplied synthetic USD demo account can be loaded here.");
+    if (r.data_mode !== "demo" || r.source !== "SYNTHETIC" || r.provider !== (provider === "moonharbor" ? "moonharbor_demo" : provider) || r.currency !== "USD" || r.account_id !== (provider === "draftkings" ? `${accountPrefix}account_001` : provider === "moonharbor" ? `${accountPrefix}mh_account_001` : `${accountPrefix}fd_account_001`) || r.connection_id !== (provider === "draftkings" ? `${accountPrefix}connection_001` : provider === "moonharbor" ? `${accountPrefix}mh_connection_001` : `${accountPrefix}fd_connection_001`)) throw new Error("Only the supplied synthetic USD demo account can be loaded here.");
   }
 }
 export type Provider = "draftkings" | "fanduel" | "moonharbor";
+export type DemoVersion = "v1" | "v2";
 
 // These are explicitly complete synthetic account histories, including days
 // without entries. The source CSVs are private local fixtures; keep the newer
@@ -62,7 +64,7 @@ const extraActivity: Record<Provider, { date: string; stake: number; payout: num
   ]
 };
 
-function extendDemoHistory(provider: Provider, bets: Bet[], transactions: Transaction[]) {
+function extendDemoHistory(provider: Provider, version: DemoVersion, bets: Bet[], transactions: Transaction[]) {
   const label = provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings";
   let balance = transactions.at(-1)!.balance;
   const bonusBalance = transactions.at(-1)!.bonusBalance;
@@ -72,7 +74,7 @@ function extendDemoHistory(provider: Provider, bets: Bet[], transactions: Transa
     transactions.push({ id, provider: label, at, type, cash, bonus: 0, balance, bonusBalance, betId, description: `Simulated ${type}` });
   };
   extraActivity[provider].forEach(({ date, stake, payout }, index) => {
-    const prefix = `sim_extra_${provider}_${index + 1}`;
+    const prefix = `sim_${version === "v2" ? "v2_" : ""}extra_${provider}_${index + 1}`;
     const placedAt = `${date}T15:00:00.000Z`;
     const settledAt = `${date}T17:00:00.000Z`;
     if (index === 0) add(`${prefix}_deposit`, `${date}T14:00:00.000Z`, "deposit", 8000);
@@ -82,10 +84,11 @@ function extendDemoHistory(provider: Provider, bets: Bet[], transactions: Transa
   });
 }
 
-export async function loadFixture(provider: Provider = "draftkings"): Promise<Snapshot> {
-  const root = path.join(process.cwd(), "data", provider);
-  const [b, t] = await Promise.all(["bets", "transactions"].map(async kind => parseCsv(await readFile(path.join(root, `${provider}_connected_${kind}.csv`), "utf8"))));
-  checkRows(b, "bet_id", provider); checkRows(t, provider === "fanduel" ? "entry_id" : "transaction_id", provider);
+export async function loadFixture(provider: Provider = "draftkings", version: DemoVersion = "v1"): Promise<Snapshot> {
+  if (version !== "v1" && version !== "v2") throw new Error("Unknown demo version.");
+  const root = path.join(process.cwd(), "data", `${version}_demo`, provider);
+  const [b, t] = await Promise.all(["bets", "transactions"].map(async kind => parseCsv(await readFile(path.join(root, `${version}_${provider}_connected_${kind}.csv`), "utf8"))));
+  checkRows(b, "bet_id", provider, version); checkRows(t, provider === "fanduel" ? "entry_id" : "transaction_id", provider, version);
   const bets: Bet[] = b.map(r => ({ id: r.bet_id, placedAt: timestamp(r.placed_at), settledAt: r.settled_at ? timestamp(r.settled_at) : null, status: r.status, stake: money(r,"stake_minor"), cashStake: money(r,"cash_stake_minor"), bonusStake: money(r,"bonus_stake_minor"), payout: money(r,"payout_minor"), refund: money(r,"refund_minor"), wagerId: provider === "fanduel" ? r.wager_entry_id : r.wager_transaction_id }));
   const transactions: Transaction[] = t.map(r => ({ id: provider === "fanduel" ? r.entry_id : r.transaction_id, provider: provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings", at: timestamp(r.timestamp), type: r.type, cash: money(r,"amount_minor"), bonus: provider === "moonharbor" ? 0 : money(r,"bonus_amount_minor"), balance: money(r,"balance_after_minor"), bonusBalance: provider === "moonharbor" ? 0 : money(r,"bonus_balance_after_minor"), betId: r.bet_id, description: r.description })).sort((a,b) => a.at.localeCompare(b.at));
   const byId = new Map(transactions.map(t => [t.id,t]));
@@ -109,13 +112,13 @@ export async function loadFixture(provider: Provider = "draftkings"): Promise<Sn
   }
   let supplemental: Snapshot["supplemental"];
   if (provider === "fanduel") {
-    const promotions = parseCsv(await readFile(path.join(root, "fanduel_connected_promotions.csv"), "utf8"));
-    const statements = parseCsv(await readFile(path.join(root, "fanduel_connected_activity_statements.csv"), "utf8"));
-    checkRows(promotions, "promotion_id", provider); checkRows(statements, "statement_id", provider);
+    const promotions = parseCsv(await readFile(path.join(root, `${version}_fanduel_connected_promotions.csv`), "utf8"));
+    const statements = parseCsv(await readFile(path.join(root, `${version}_fanduel_connected_activity_statements.csv`), "utf8"));
+    checkRows(promotions, "promotion_id", provider, version); checkRows(statements, "statement_id", provider, version);
     validateFanDuel(b, t, promotions, statements);
     supplemental = { promotions: promotions.length, statements: statements.length };
   }
-  extendDemoHistory(provider, bets, transactions);
+  extendDemoHistory(provider, version, bets, transactions);
   return { supplemental, bets, transactions, loadedAt: new Date().toISOString(), from: demoCoverageFrom, through: demoCoverageThrough, provider: provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings", mode: "demo" };
 }
 

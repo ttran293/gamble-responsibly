@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
-import { seedAccountDemoConnections } from "../lib/demo-connections";
+import { clearDemoConnections } from "../lib/demo-connections";
 
 export function StartForm({ invite }: { invite?: { token: string; senderName: string; senderEmail: string | null; recipientEmail: string; note: string | null } | null }) {
   const [name, setName] = useState("");
@@ -31,7 +31,7 @@ export function StartForm({ invite }: { invite?: { token: string; senderName: st
       const { error } = await authClient.signUp.email({ name: name || "Jelly member", email, password, callbackURL: "/dashboard" });
       if (error) { setStatus(error.message ?? "We could not create that account."); return; }
       void authClient.sendVerificationEmail({ email, callbackURL: "/dashboard" });
-      try { seedAccountDemoConnections(); } catch { /* Storage may be disabled; the dashboard still loads demo accounts. */ }
+      try { clearDemoConnections(); } catch { /* The dashboard still offers a version choice when storage is unavailable. */ }
     }
     if (invite && !await acceptInvite()) return;
     window.location.assign("/dashboard");

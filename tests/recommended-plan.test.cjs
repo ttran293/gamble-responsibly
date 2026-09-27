@@ -8,15 +8,26 @@ const { combineSnapshots } = require('../lib/metrics/core.ts');
 const { loadFixture } = require('../lib/metrics/fixture.ts');
 
 test('a shared complete week drives the plan and is independent of dashboard filters', async () => {
-  const snapshots = await Promise.all(['draftkings', 'fanduel', 'moonharbor'].map(loadFixture));
+  const snapshots = await Promise.all(['draftkings', 'fanduel', 'moonharbor'].map(provider => loadFixture(provider)));
   const combined = combineSnapshots(snapshots);
   const evidence = planEvidence(combined);
   assert.deepEqual([evidence.from, evidence.to], ['2026-09-21', '2026-09-27']);
   const plan = recommendedPlan({ ...defaultOnboardingAnswers, goal: 'reduce', reduceTarget: { kind: 'days_per_week', value: 2 } }, combined);
-  assert.equal(plan.actions.length, 3);
+  assert.equal(plan.actions.length, 4);
   assert.match(plan.actions[0].detail, /2 betting days/);
   assert.match(plan.actions[1].detail, /2 betting days/);
   assert.ok(plan.actions.every(action => /^[a-z0-9:+_-]+$/.test(action.id)));
+});
+
+test('adding activity refines the checklist without resetting completed action IDs', async () => {
+  const snapshot = await loadFixture('draftkings');
+  const answers = { ...defaultOnboardingAnswers, goal: 'reduce' };
+  const before = recommendedPlan(answers);
+  const after = recommendedPlan(answers, snapshot);
+  assert.ok(after.evidence);
+  assert.deepEqual(after.actions.map(action => action.id), before.actions.map(action => action.id));
+  assert.notEqual(after.actions[0].detail, before.actions[0].detail);
+  assert.match(after.actions.at(-1).detail, /next week/);
 });
 
 test('incomplete shared history falls back to onboarding choices', async () => {

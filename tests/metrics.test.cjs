@@ -76,7 +76,7 @@ test('all accounts aggregates balances, unique betting days and namespaced IDs',
 });
 test('FanDuel rejects altered statement totals and missing transaction parts',()=>{
  const {validateFanDuel}=require('../lib/metrics/fixture.ts');
- const read=kind=>parseCsv(fs.readFileSync(`data/fanduel/fanduel_connected_${kind}.csv`,'utf8'));
+ const read=kind=>parseCsv(fs.readFileSync(`data/v1_demo/fanduel/v1_fanduel_connected_${kind}.csv`,'utf8'));
  const b=read('bets'),t=read('transactions'),p=read('promotions'),s=read('activity_statements');
  assert.doesNotThrow(()=>validateFanDuel(b,t,p,s));
  const changed=s.map(r=>({...r}));changed[0].deposited_minor='1';assert.throws(()=>validateFanDuel(b,t,p,changed));
@@ -97,4 +97,18 @@ test('fictional Moonharbor normalizes offset dates and reconciles standalone and
  assert.equal(combined.opening+combined.netDeposits+combined.cashBettingFlow,combined.closing);
  assert.equal(new Set(all.transactions.map(t=>t.id)).size,330);
  assert.equal((await loadFixture('moonharbor')).transactions.length,41);
+});
+
+test('v2 demo has distinct records and reconciles for every provider', async()=>{
+ const providers=['draftkings','fanduel','moonharbor'];
+ for (const provider of providers) {
+  const v1=await loadFixture(provider,'v1'),v2=await loadFixture(provider,'v2');
+  assert.equal(v2.bets.length,v1.bets.length);
+  assert.equal(v2.transactions.length,v1.transactions.length);
+  assert.notEqual(v2.bets[0].id,v1.bets[0].id);
+  assert.notEqual(v2.bets[0].placedAt,v1.bets[0].placedAt);
+  const metrics=summarize(v2,v2.from,v2.through.slice(0,10));
+  assert.equal(metrics.opening+metrics.netDeposits+metrics.cashBettingFlow,metrics.closing);
+  assert.ok(metrics.deposits>summarize(v1,v1.from,v1.through.slice(0,10)).deposits);
+ }
 });

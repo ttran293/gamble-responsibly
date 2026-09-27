@@ -36,10 +36,3 @@ next-env.d.ts
 # Project-local files not intended for source control
 /docs/
 /skill/
-
-# Private local demo fixtures
-/data/draftkings/
-
-/data/fanduel/
-
-/data/moonharbor/

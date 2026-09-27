@@ -1,10 +1,17 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { formatStamp } from "../lib/format-date";
 import type { Transaction } from "../lib/metrics/core";
 
 const pageSize = 8;
 const usd = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+const displayType = (type: string) => {
+  const label = type.replaceAll("_", " ");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+};
+const displayProvider = (provider: string) => provider.replace(/\s*\(fictional\)/gi, "");
+const displayDescription = (description: string) => /^Simulated (payout|wager)$/i.test(description.trim()) ? "" : description;
 
 export function TransactionList({ transactions }: { transactions: Transaction[] }) {
   const [page, setPage] = useState(1);
@@ -26,9 +33,13 @@ export function TransactionList({ transactions }: { transactions: Transaction[] 
   }
 
   return <>
-    <div className="panel-title"><div><p className="eyebrow">Source activity</p><h2 ref={headingRef} tabIndex={-1}>Transactions</h2></div><span className="transaction-total">{transactions.length} transactions</span></div>
+    <div className="panel-title"><div><p className="eyebrow">Activity</p><h2 ref={headingRef} tabIndex={-1}>Transactions</h2></div><span className="transaction-total">{transactions.length} transactions</span></div>
     {!transactions.length && <p>No transactions in this period.</p>}
-    {transactions.slice(start, end).map(t => <div className="activity-row" key={t.id}><div><strong>{t.type.replaceAll("_", " ")}</strong><small>{t.provider ? `${t.provider} · ` : ""}{t.description}</small></div><time dateTime={t.at}>{t.at.slice(0, 16).replace("T", " ")} UTC</time><b>{usd(t.cash)}{t.bonus !== 0 && <small>{usd(t.bonus)} bonus</small>}</b></div>)}
+    {transactions.slice(start, end).map(t => {
+      const provider = displayProvider(t.provider ?? "");
+      const description = displayDescription(t.description);
+      return <div className="activity-row" key={t.id}><div><strong>{displayType(t.type)}</strong><small>{provider}{provider && description ? " · " : ""}{description}</small></div><time dateTime={t.at}>{formatStamp(t.at)}</time><b>{usd(t.cash)}{t.bonus !== 0 && <small>{usd(t.bonus)} bonus</small>}</b></div>;
+    })}
     {pageCount > 1 && <nav className="transaction-pagination" aria-label="Transaction pages">
       <p className="transaction-page-range" aria-live="polite">Showing {start + 1}–{end} of {transactions.length}</p>
       <div className="transaction-page-buttons">

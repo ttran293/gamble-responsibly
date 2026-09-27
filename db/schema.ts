@@ -32,6 +32,17 @@ export const userProfiles = pgTable("user_profiles", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 });
 export const emergencyContactLinks = pgTable("emergency_contact_links", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), supportContactId: uuid("support_contact_id").notNull().references(() => supportContacts.id), consentedAt: timestamp("consented_at", { withTimezone: true }).defaultNow().notNull(), revokedAt: timestamp("revoked_at", { withTimezone: true }) });
+export const emergencyContactRequests = pgTable("emergency_contact_requests", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  contactName: text("contact_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  status: text("status").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
 export const activityEntries = pgTable("activity_entries", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), kind: text("kind").notNull(), amountCents: text("amount_cents").notNull(), occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() });
 export const pausePlans = pgTable("pause_plans", { id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull(), goal: text("goal").notNull(), trigger: text("trigger"), action: text("action").notNull(), isActive: boolean("is_active").default(true).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull() });
 

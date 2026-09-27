@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
-import { seedAccountDemoConnections } from "../lib/demo-connections";
+import { clearDemoConnections } from "../lib/demo-connections";
 
 export function SignInForm() {
   const [email, setEmail] = useState("");
@@ -18,7 +18,7 @@ export function SignInForm() {
     try {
       const { error } = await authClient.signIn.email({ email, password, rememberMe, callbackURL: "/dashboard" });
       if (error) { setStatus(error.message ?? "We could not sign you in. Check your details and try again."); return; }
-      try { seedAccountDemoConnections(); } catch { /* Storage may be disabled; the dashboard still loads demo accounts. */ }
+      try { clearDemoConnections(); } catch { /* The dashboard still offers a version choice when storage is unavailable. */ }
       window.location.assign("/dashboard");
     } catch { setStatus("Could not reach sign-in. Check that the app is running and try again."); }
     finally { setBusy(false); }

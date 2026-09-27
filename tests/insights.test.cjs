@@ -45,7 +45,7 @@ const {ActivityInsights}=require('../components/activity-insights.tsx');
 const {defaultPlan}=require('../lib/guardrails/model.ts');
 test('cards are capped at three and show account-specific coverage',()=>{
  const s=fixture();const html=renderToStaticMarkup(React.createElement(ActivityInsights,{snapshot:s,from:'2026-08-08',to:'2026-08-08',demo:true,review:()=>{}}));
- assert.equal((html.match(/<article/g)||[]).length,3);assert.match(html,/A change in your recorded activity/);assert.match(html,/Test · 2026-08-08 UTC/);
+ assert.equal((html.match(/<article/g)||[]).length,3);assert.match(html,/A change in your recorded activity/);assert.match(html,/Test · Aug 8, 26 UTC/);
 });
 test('stop goal replaces financial comparisons with saved plan progress',()=>{
  const s=fixture(),plan=defaultPlan('stop','2026-08-01');

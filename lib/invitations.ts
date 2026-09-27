@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { emergencyContactLinks, invitations, supportContacts } from "../db/schema";
 import { db } from "./db";
 
@@ -67,13 +67,4 @@ export async function acceptInvitation(userId: string, email: string, token: str
     await tx.update(invitations).set({ status: "accepted", acceptedAt: new Date() }).where(and(eq(invitations.id, invite.id), eq(invitations.status, "sent")));
     return { ok: true, senderName: invite.senderName };
   });
-}
-
-export async function activeEmergencyContact(userId: string) {
-  const [row] = await db.select({ name: supportContacts.name }).from(emergencyContactLinks)
-    .innerJoin(supportContacts, eq(emergencyContactLinks.supportContactId, supportContacts.id))
-    .where(and(eq(emergencyContactLinks.userId, userId), isNull(emergencyContactLinks.revokedAt)))
-    .orderBy(desc(emergencyContactLinks.consentedAt))
-    .limit(1);
-  return row ?? null;
 }

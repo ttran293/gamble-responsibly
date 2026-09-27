@@ -1,3 +1,4 @@
+import { formatDay } from "../format-date";
 import { day, shiftDay, summarize, type Snapshot } from "./core";
 
 export type InsightSignal =
@@ -31,15 +32,15 @@ export function activityInsights(snapshot:Snapshot, from:string, to:string) {
     const average=history.length/activeDays;
     if(current.length>=Math.max(average*2,average+3)&&currentStake>=Math.max(typical*2,typical+500)) {
       anomalies.push({accounts,id:`change:${accounts}:${date}`,title:"A change in your recorded activity",from:date,to:date,
-        text:`On ${date}, you placed ${current.length} bets with a median cash stake of ${money(currentStake)}. During ${priorFrom}–${priorTo}, you averaged ${Number(average.toFixed(1))} bets per betting day, with a median cash stake of ${money(typical)}.`,
+        text:`On ${formatDay(date)}, you placed ${current.length} bets with a median cash stake of ${money(currentStake)}. During ${formatDay(priorFrom)}–${formatDay(priorTo)}, you averaged ${Number(average.toFixed(1))} bets per betting day, with a median cash stake of ${money(typical)}.`,
         signal:{kind:"frequency_stake_change",currentBets:current.length,baselineBetsPerDay:average,currentMedianCashStake:currentStake,baselineMedianCashStake:typical,baselineFrom:priorFrom,baselineTo:priorTo}});
     }
   }
   const comparisons:ActivityInsight[]=[];
   if(metrics.comparison) {
     const p=metrics.comparison, id=`${accounts}:${from}:${to}`;
-    comparisons.push({accounts,id:`days:${id}`,title:"Betting days",from,to,text:`You recorded bets on ${metrics.activeDays} days, compared with ${p.activeDays} during ${p.from}–${p.to}. Both periods cover ${metrics.days} days.`,signal:{kind:"period_comparison",metric:"activeDays",current:metrics.activeDays,previous:p.activeDays,previousFrom:p.from,previousTo:p.to}});
-    comparisons.push({accounts,id:`stakes:${id}`,title:"Cash wagered",from,to,text:`You wagered ${money(metrics.cashWagered)} in cash, compared with ${money(p.cashStake)} during ${p.from}–${p.to}. Cash stakes are money put into bets, not money lost.`,signal:{kind:"period_comparison",metric:"cashWagered",current:metrics.cashWagered,previous:p.cashStake,previousFrom:p.from,previousTo:p.to}});
+    comparisons.push({accounts,id:`days:${id}`,title:"Betting days",from,to,text:`You recorded bets on ${metrics.activeDays} days, compared with ${p.activeDays} during ${formatDay(p.from)}–${formatDay(p.to)}. Both periods cover ${metrics.days} days.`,signal:{kind:"period_comparison",metric:"activeDays",current:metrics.activeDays,previous:p.activeDays,previousFrom:p.from,previousTo:p.to}});
+    comparisons.push({accounts,id:`stakes:${id}`,title:"Cash wagered",from,to,text:`You wagered ${money(metrics.cashWagered)} in cash, compared with ${money(p.cashStake)} during ${formatDay(p.from)}–${formatDay(p.to)}. Cash stakes are money put into bets, not money lost.`,signal:{kind:"period_comparison",metric:"cashWagered",current:metrics.cashWagered,previous:p.cashStake,previousFrom:p.from,previousTo:p.to}});
   }
   // Also check each selected account so an account-specific change is not
   // hidden by another account's larger usual stakes.

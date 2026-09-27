@@ -1,34 +1,38 @@
 export const demoConnectionProviders = ["draftkings", "fanduel", "moonharbor"] as const;
 export type DemoConnectionProvider = (typeof demoConnectionProviders)[number];
+export type DemoVersion = "v1" | "v2";
 
-const storageKey = "stillwater-demo-connections-v1";
-const seededKey = "stillwater-demo-connections-seeded-v1";
+const versionKey = "stillwater-demo-version";
+const providersKey = "stillwater-demo-selected-providers";
 
-function readSaved(): DemoConnectionProvider[] {
-  const raw = sessionStorage.getItem(storageKey);
-  if (raw === null) return [];
-  const parsed = JSON.parse(raw) as unknown;
-  if (!Array.isArray(parsed)) return [];
-  return demoConnectionProviders.filter(provider => parsed.includes(provider));
+export function savedDemoVersion(): DemoVersion | null {
+  const version = sessionStorage.getItem(versionKey);
+  return version === "v1" || version === "v2" ? version : null;
 }
 
-/** Account views with no saved choice load every synthetic demo account. */
-export function demoConnectionsToLoad(accountDefault: boolean): DemoConnectionProvider[] {
-  const seeded = sessionStorage.getItem(seededKey) === "1";
-  if (accountDefault && !seeded) return [...demoConnectionProviders];
-  return readSaved();
+export function saveDemoVersion(version: DemoVersion) {
+  sessionStorage.setItem(versionKey, version);
 }
 
-export function saveDemoConnections(providers: DemoConnectionProvider[], markAccountSeeded: boolean) {
-  sessionStorage.setItem(storageKey, JSON.stringify(providers));
-  if (markAccountSeeded) sessionStorage.setItem(seededKey, "1");
+export function savedDemoProviders(): DemoConnectionProvider[] {
+  const raw = sessionStorage.getItem(providersKey);
+  if (!raw) return [...demoConnectionProviders];
+  try {
+    const values: unknown = JSON.parse(raw);
+    const selected = Array.isArray(values) ? demoConnectionProviders.filter(provider => values.includes(provider)) : [];
+    return selected.length ? selected : [...demoConnectionProviders];
+  } catch {
+    return [...demoConnectionProviders];
+  }
 }
 
-export function seedAccountDemoConnections() {
-  saveDemoConnections([...demoConnectionProviders], true);
+export function saveDemoProviders(providers: DemoConnectionProvider[]) {
+  sessionStorage.setItem(providersKey, JSON.stringify(providers));
 }
 
 export function clearDemoConnections() {
-  sessionStorage.removeItem(storageKey);
-  sessionStorage.removeItem(seededKey);
+  sessionStorage.removeItem(versionKey);
+  sessionStorage.removeItem(providersKey);
+  sessionStorage.removeItem("stillwater-demo-connections-v1");
+  sessionStorage.removeItem("stillwater-demo-connections-seeded-v1");
 }

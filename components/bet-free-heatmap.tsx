@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FocusEvent, type MouseEvent } from "react";
+import { formatDay } from "../lib/format-date";
 import { shiftDay } from "../lib/metrics/core";
 
 type DailyPoint = { date: string; count: number; cashStake: number };
@@ -10,7 +11,6 @@ type Tip = { text: string; x: number; y: number; above: boolean };
 const usd = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay();
 const monthLabel = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
-const fullDate = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 function weeksFor(daily: DailyPoint[]) {
   if (!daily.length) return [] as Cell[][];
@@ -43,7 +43,7 @@ function monthSpans(weeks: Cell[][]) {
 }
 
 function cellText(cell: Cell, completeCoverage: boolean) {
-  const when = fullDate(cell.date);
+  const when = formatDay(cell.date);
   if (cell.count > 0) {
     const bets = `${cell.count} ${cell.count === 1 ? "bet" : "bets"}`;
     return `${when}: ${bets}, ${usd(cell.cashStake)} cash wagered`;

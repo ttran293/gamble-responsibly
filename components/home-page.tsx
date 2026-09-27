@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { JellyMessage } from "./jelly-message";
 import { SignOutButton } from "./sign-out-button";
 
 const transactions = [
@@ -74,7 +75,7 @@ const faqs = [
   { q: "What do I track?", a: "Your gambling habit, and a goal to gamble less or stop. Jelly helps you work toward that goal." },
   { q: "What if I invite someone I care about?", a: "They decide whether to join and set their own goal. If they create an account from your invitation, you become their emergency contact. Jelly notifies you when a streak of not betting breaks, or when they want to bet and want to reach out." },
   { q: "What does an emergency contact see?", a: "Only those notices. You do not see their habit record, spending, or goal details unless they choose to share them." },
-  { q: "Can I use Jelly without an emergency contact?", a: "Yes. Tracking your own habit and goal does not require anyone else. You can add a contact later if you want someone notified when you are struggling." }
+  { q: "Can I use Jelly without an emergency contact?", a: "Yes. Tracking your own habit and goal does not require anyone else. You can request one from your dashboard if you want someone notified when you are struggling." }
 ];
 
 const resources = [
@@ -99,6 +100,9 @@ function Home({ signedIn }: { signedIn: boolean }) {
       <h1>Work toward gambling less.</h1>
       <p>Track your own habit, or invite someone you care about and be there if they struggle.</p>
       <p className="egg"><b>Jelly</b> <i>(n.)</i> The little wobble before you bounce back.</p>
+      <JellyMessage label="A note from Jelly" className="hero-note">
+        <p>A positive result does not mean gambling is harmless. Frequency, amounts, and your own commitments matter independently of wins and losses.</p>
+      </JellyMessage>
     </section>
     <section className="choice">
       <div className="paths-band" aria-label="Choose your path">
@@ -162,7 +166,10 @@ function Home({ signedIn }: { signedIn: boolean }) {
       <p className="resource-note">For gambling-related debt, or for blocking and self-exclusion, call or text the helpline and ask to be connected in your state.</p>
       </div>
     </section>
-    <p className="privacy-note"><Icon>⌁</Icon> Your information is private. No one can see or connect your data without your clear permission.</p>
+    <footer className="site-footer">
+      <p>Your information is private. No one can see or connect your data without your clear permission.</p>
+      <Link href="/privacy">Privacy</Link>
+    </footer>
   </>;
 }
 
