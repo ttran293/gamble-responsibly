@@ -65,7 +65,11 @@ export const onboardingSchema = z.object({
     kind: z.enum(["days_per_week", "weekly_spending"]),
     value: z.number().int().min(0).max(1000000)
   }).nullable(),
-  stopDate: z.iso.date().nullable()
+  stopDate: z.iso.date().nullable(),
+  demoSelection: z.object({
+    version: z.enum(["v1", "v2"]),
+    providers: z.array(z.enum(["draftkings", "fanduel", "moonharbor"])).min(1).max(3)
+  }).nullable().optional()
 }).superRefine((answers, context) => {
   if (answers.pauseAction === "custom" && !answers.customPauseAction) {
     context.addIssue({ code: "custom", path: ["customPauseAction"], message: "Add your pause action or choose another option." });

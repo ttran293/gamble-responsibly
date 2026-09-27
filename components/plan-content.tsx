@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { OnboardingAnswers } from "../lib/onboarding";
 import Link from "next/link";
-import { savedDemoProviders, savedDemoVersion } from "../lib/demo-connections";
 import { combineSnapshots, type Snapshot } from "../lib/metrics/core";
 import { recommendedPlan } from "../lib/recommended-plan";
 import { PersonalSummary } from "./personal-summary";
@@ -17,9 +16,9 @@ export function PlanContent({ answers }: { answers: OnboardingAnswers }) {
     let cancelled = false;
     async function load() {
       try {
-        const version = savedDemoVersion();
-        if (!version) { if (!cancelled) setSnapshot(null); return; }
-        const selected = savedDemoProviders();
+        const selection = answers.demoSelection;
+        if (!selection) { if (!cancelled) setSnapshot(null); return; }
+        const { version, providers: selected } = selection;
         const results = await Promise.all(selected.map(async provider => {
           const response = await fetch(`/api/demo/connections/${provider}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ version }) });
           if (!response.ok) throw new Error("Could not load the connected activity. Recommendations are based on your answers for now.");
@@ -33,7 +32,7 @@ export function PlanContent({ answers }: { answers: OnboardingAnswers }) {
     }
     void load();
     return () => { cancelled = true; };
-  }, []);
+  }, [answers.demoSelection]);
   const plan = recommendedPlan(answers, snapshot);
   return <>
     <section className="plan-hero"><p className="eyebrow">Step 3 of 3 · Your plan</p><h1>A plan for your goal</h1><p>{loading ? "Checking your demo activity…" : "Start with what feels useful. You can adjust your goal and these steps later."}</p></section>

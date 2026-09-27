@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   defaultOnboardingAnswers,
   focusOptions,
@@ -10,7 +10,7 @@ import {
   triggerOptions,
   type OnboardingAnswers
 } from "../lib/onboarding";
-import { clearDemoConnections, demoConnectionProviders, savedDemoProviders, savedDemoVersion, saveDemoProviders, saveDemoVersion, type DemoConnectionProvider, type DemoVersion } from "../lib/demo-connections";
+import { demoConnectionProviders, type DemoConnectionProvider, type DemoVersion } from "../lib/demo-connections";
 import { JellyMessage } from "./jelly-message";
 import { PlanLoadingState } from "./plan-loading-state";
 
@@ -59,40 +59,21 @@ export function OnboardingForm({ initialAnswers, editing, onSaved, onCancel, onS
   const [goalChosen, setGoalChosen] = useState(Boolean(initialAnswers && ["stay", "reduce", "stop"].includes(initialAnswers.goal)));
   const [targetKind, setTargetKind] = useState<"days_per_week" | "weekly_spending" | "">(initialAnswers?.reduceTarget?.kind ?? "");
   const [targetDraft, setTargetDraft] = useState(initialAnswers?.reduceTarget ? String(initialAnswers.reduceTarget.value) : "");
-  const [version, setVersion] = useState<DemoVersion | null>(null);
-  const [providers, setProviders] = useState<DemoConnectionProvider[]>([]);
-  const [dataReady, setDataReady] = useState(false);
+  const [version, setVersion] = useState<DemoVersion | null>(initialAnswers?.demoSelection?.version ?? null);
+  const [providers, setProviders] = useState<DemoConnectionProvider[]>(initialAnswers?.demoSelection?.providers ?? []);
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (onSaved) return;
-    try {
-      const savedVersion = savedDemoVersion();
-      setVersion(savedVersion);
-      setProviders(savedVersion ? savedDemoProviders() : []);
-    } catch { /* Session storage may be unavailable; the answer-based plan remains available. */ }
-    setDataReady(true);
-  }, [onSaved]);
 
   const update = <K extends keyof OnboardingAnswers>(key: K, value: OnboardingAnswers[K]) =>
     setAnswers((current) => ({ ...current, [key]: value }));
 
   function continueWithData(skip = false) {
     if (skip) {
-      try { clearDemoConnections(); } catch { /* The plan still works without connected data. */ }
       setProviders([]);
       setVersion(null);
     } else {
       if (!providers.length || !version) {
         setStatus("Choose at least one app and a demo dataset, or continue without data.");
-        return;
-      }
-      try {
-        saveDemoVersion(version);
-        saveDemoProviders(providers);
-      } catch {
-        setStatus("This browser could not save the demo connection. You can continue without data.");
         return;
       }
     }
@@ -125,7 +106,8 @@ export function OnboardingForm({ initialAnswers, editing, onSaved, onCancel, onS
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...answers,
-          gamblingTypes: []
+          gamblingTypes: [],
+          demoSelection: onSaved ? answers.demoSelection : version ? { version, providers } : null
         } satisfies OnboardingAnswers)
       });
       const data = await response.json();
@@ -160,7 +142,6 @@ export function OnboardingForm({ initialAnswers, editing, onSaved, onCancel, onS
           {demoConnectionProviders.map(provider => <button key={provider} type="button" className={`onboarding-app ${providers.includes(provider) ? "is-connected" : ""}`} aria-pressed={providers.includes(provider)} onClick={() => toggleProvider(provider)}><img src={appIcons[provider]} alt="" /><span><strong>{appNames[provider]}</strong><small>{providers.includes(provider) ? "Connected for demo" : "Click to connect"}</small></span></button>)}
         </div>
         <div className="onboarding-datasets"><strong>Choose sample activity</strong><div role="group" aria-label="Demo dataset">{(["v1", "v2"] as const).map(option => <button key={option} type="button" className={version === option ? "is-selected" : ""} aria-pressed={version === option} onClick={() => { setVersion(option); setStatus(""); }}>Demo data {option === "v1" ? "1" : "2"}</button>)}</div></div>
-        {!dataReady && <p role="status">Checking your demo selection…</p>}
       </>}
       {step === 1 && <>
         <h1>What would you like to work toward?</h1>
@@ -185,7 +166,7 @@ export function OnboardingForm({ initialAnswers, editing, onSaved, onCancel, onS
       <div className="onboarding-actions">
         {step > firstStep && <button type="button" className="onboarding-back" onClick={() => { setStep(step - 1); setStatus(""); }}>Back</button>}
         {onCancel && <button type="button" className="onboarding-cancel" onClick={onCancel}>Cancel</button>}
-        {step === 0 && <><button type="button" className="onboarding-skip" onClick={() => continueWithData(true)}>Continue without data</button><button type="button" className="primary" disabled={!dataReady} onClick={() => continueWithData()}>Continue with data →</button></>}
+        {step === 0 && <><button type="button" className="onboarding-skip" onClick={() => continueWithData(true)}>Continue without data</button><button type="button" className="primary" onClick={() => continueWithData()}>Continue with data →</button></>}
         {step === 1 && <button type="button" className="primary" disabled={!goalChosen} onClick={() => setStep(2)}>Continue →</button>}
         {step === 2 && <button type="button" className="primary" onClick={() => void finish()}>{onSaved ? "Save" : editing ? "Update my plan →" : "Generate my plan →"}</button>}
       </div>

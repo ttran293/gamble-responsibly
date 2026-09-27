@@ -74,6 +74,7 @@ export default function PrivacyPage() {
               <tr><td>Identifiers</td><td>Name and email address</td><td>Account creation, sign-in, and invitations</td></tr>
               <tr><td>Credentials</td><td>A hash of your password. We do not store the password itself.</td><td>Account creation and password sign-in</td></tr>
               <tr><td>Goal and habit details</td><td>Goal, focus areas, types of gambling, frequency, triggers, pause action, a reduce target, and a stop date</td><td>When you save onboarding answers</td></tr>
+              <tr><td>Demo activity choices</td><td>Selected sample apps and demo dataset version</td><td>When you save onboarding answers while signed in</td></tr>
               <tr><td>Limits and plan progress</td><td>Guardrail settings and notices you save, and checklist items you mark done</td><td>When you save them while signed in</td></tr>
               <tr><td>Messages</td><td>Chat messages you send, replies, and a safety flag such as crisis or betting advice</td><td>After you accept the chat disclosure</td></tr>
               <tr><td>Invitations</td><td>Sender name, sender email, recipient email, and an optional note</td><td>When someone requests an invitation</td></tr>
@@ -148,7 +149,7 @@ export default function PrivacyPage() {
           <ul>
             <li>A sign-in cookie keeps your session. A session lasts up to 30 days and can refresh while you use Jelly. “Stay signed in on this device” uses that session. The cookie is strictly necessary for a signed-in account.</li>
             <li>We do not set analytics or advertising cookies.</li>
-            <li>The demo may store connection choices in <code>sessionStorage</code> and guardrail or insight choices in <code>localStorage</code>. That data stays in your browser until you clear it. It is not your account record.</li>
+            <li>The public demo may store connection choices in <code>sessionStorage</code> and guardrail or insight choices in <code>localStorage</code>. That data stays in your browser until you clear it. Public demo choices are not your account record.</li>
             <li>Sample dashboards on the public site are page content. They are not saved as your activity.</li>
           </ul>
         </section>

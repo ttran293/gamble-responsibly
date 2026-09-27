@@ -57,14 +57,20 @@ export function ConnectedDashboard({ name = "Demo", demo = false, signedIn = fal
   }
 
   useEffect(() => {
-    try {
-      const saved = savedDemoVersion();
-      if (saved) {
-        const savedProviders = savedDemoProviders();
-        setConnectedProviders(savedProviders);
-        void loadVersion(saved, false, savedProviders);
-      }
-    } catch { setStorageError(true); }
+    if (publicPreview) {
+      try {
+        const saved = savedDemoVersion();
+        if (saved) {
+          const savedProviders = savedDemoProviders();
+          setConnectedProviders(savedProviders);
+          void loadVersion(saved, false, savedProviders);
+        }
+      } catch { setStorageError(true); }
+    } else if (answers?.demoSelection) {
+      const { version: saved, providers: savedProviders } = answers.demoSelection;
+      setConnectedProviders(savedProviders);
+      void loadVersion(saved, false, savedProviders);
+    }
     setReady(true);
     return () => { requestId.current++; };
   }, []);
@@ -88,7 +94,7 @@ export function ConnectedDashboard({ name = "Demo", demo = false, signedIn = fal
     <div className="connection-tiles" aria-label="App connection status">
       {demoConnectionProviders.map(provider => <div key={provider} className={`connection-tile is-static ${connectedProviders.includes(provider) ? "is-connected" : ""}`}><span className="connection-tile-icon"><img src={icons[provider]} alt="" /></span><span className="connection-tile-name">{names[provider]}</span><span className="connection-tile-status">{connectedProviders.includes(provider) ? "Connected" : "Not connected"}</span></div>)}
     </div>
-    {storageError && <p role="status">Browser storage is unavailable. Your selection will last until this page is closed.</p>}
+    {publicPreview && storageError && <p role="status">Browser storage is unavailable. Your selection will last until this page is closed.</p>}
   </section>;
 
   if (!snapshots) return <>
