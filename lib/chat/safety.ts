@@ -14,5 +14,6 @@ export function classifyClearRequest(content: string): SafetyFlag {
 }
 
 export function unsafeReply(content: string): boolean {
-  return /\b(?:guaranteed (?:win|profit)|place (?:a|the|your) bet|bet (?:on|more|\$)|increase (?:your|the) stake|chase (?:the|your) losses|disable (?:your|the) (?:block|pause)|you (?:will|can) definitely win|you don't need (?:help|a therapist))\b/i.test(content);
+  const withoutWarnings = content.replace(/\b(?:don't|do not|never|avoid|try not to)\s+(?:place (?:a|the|your) bet|bet (?:on|more|\$)|increase (?:your|the) stake|chase (?:the|your) losses|disable (?:your|the) (?:block|pause))\b/gi, "");
+  return /\b(?:guaranteed (?:win|profit)|place (?:a|the|your) bet|bet (?:on|more|\$)|increase (?:your|the) stake|chase (?:the|your) losses|disable (?:your|the) (?:block|pause)|you (?:will|can) definitely win|you don't need (?:help|a therapist))\b/i.test(withoutWarnings);
 }

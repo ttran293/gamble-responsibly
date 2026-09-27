@@ -31,3 +31,15 @@ test('betting category replaces generated text with fixed refusal', async () => 
     assert.doesNotMatch(result.reply, /Try betting more/);
   } finally { global.fetch = previous; }
 });
+
+test('loss-chasing reflection can mention winning it back without triggering a fallback', async () => {
+  const previous = global.fetch;
+  global.fetch = async (url) => url.endsWith('/moderations')
+    ? { ok: true, json: async () => ({ results: [{ categories: { 'self-harm/intent': false, 'self-harm/instructions': false } }] }) }
+    : { ok: true, json: async () => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify({ category: 'none', reply: 'The thought that you can win it back can feel persuasive after a loss. Step away from the betting app for ten minutes and notice what you are hoping the next bet would change.' }) }] }] }) };
+  try {
+    const result = await completeChat('{}', [{ role: 'user', content: 'I keep thinking I can win back a loss.' }], 'test-key');
+    assert.equal(result.flag, 'none');
+    assert.match(result.reply, /Step away/);
+  } finally { global.fetch = previous; }
+});

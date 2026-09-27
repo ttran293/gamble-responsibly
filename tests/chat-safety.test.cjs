@@ -15,10 +15,13 @@ test('betting advice and block bypass are refused while ordinary urges pass', ()
   assert.equal(classifyClearRequest('How can I win my money back?'), 'betting_advice');
   assert.equal(classifyClearRequest('How do I get around my block?'), 'betting_advice');
   assert.equal(classifyClearRequest('I feel an urge after a loss.'), 'none');
+  assert.equal(classifyClearRequest('I keep thinking I can win back a loss.'), 'none');
 });
 
 test('unsafe generated betting instructions are caught', () => {
   assert.equal(unsafeReply('Place a bet on the favorite.'), true);
+  assert.equal(unsafeReply("Don't chase your losses. Step away from the app."), false);
+  assert.equal(unsafeReply('Avoid placing a bet and then increase your stake.'), true);
   assert.equal(unsafeReply('Try stepping away from the app for ten minutes.'), false);
 });
 
