@@ -37,7 +37,7 @@ export function StartForm({ invite }: { invite?: { token: string; senderName: st
     window.location.assign("/dashboard");
   }
   return <form className="simple-form" onSubmit={submit}>
-    {invite && <p className="privacy-copy">The sender entered the name {invite.senderName}.{invite.senderEmail ? ` They confirmed control of ${invite.senderEmail}.` : " Their email address was not confirmed."} Creating this account makes them your emergency contact. They will not see your activity, spending, or goal.{invite.note ? ` Their note: “${invite.note}”` : ""}</p>}
+    {invite?.note && <p className="privacy-copy">Their note: “{invite.note}”</p>}
     <label>First name or nickname<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex" /></label>
     <label>Email address<input required type="email" readOnly={Boolean(invite)} aria-readonly={invite ? true : undefined} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label>
     <label>Password<input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" /></label>

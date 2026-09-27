@@ -13,9 +13,9 @@ export function InvitationForm() {
     try {
       const response = await fetch("/api/invitations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(form)) });
       const data = await response.json();
-      setStatus(response.ok ? "Invitation sent. They can choose whether to accept it." : data.error ?? "Could not send the invitation.");
+      setStatus(response.ok ? "Invitation sent." : data.error ?? "Could not send the invitation.");
     } catch { setStatus("Could not send the invitation. Please try again."); }
     finally { setBusy(false); }
   }
-  return <form className="simple-form" onSubmit={submit}><div className="two-fields"><label>Your name<input required name="senderName" placeholder="Your name" /></label><label>Your email<input required name="senderEmail" type="email" placeholder="you@example.com" /></label></div><label>Their email address<input required name="recipientEmail" type="email" placeholder="them@example.com" /></label><label>Optional note<textarea name="note" maxLength={500} placeholder="I thought this could be useful. No pressure." /></label><p className="privacy-copy">They will receive the invitation directly. Your email address is recorded as the support contact, but it has not been confirmed. If they create an account from your invitation, you become their emergency contact. You will not see their dashboard, spending, or goal.</p><button className="primary" type="submit" disabled={busy}>{busy ? "Sending…" : "Send invitation"}</button>{status && <p className="form-status">{status}</p>}</form>;
+  return <form className="simple-form" onSubmit={submit}><div className="two-fields"><label>Your name<input required name="senderName" placeholder="Your name" /></label><label>Your email<input required name="senderEmail" type="email" placeholder="you@example.com" /></label></div><label>Their email address<input required name="recipientEmail" type="email" placeholder="them@example.com" /></label><label>Optional note<textarea name="note" maxLength={500} placeholder="I thought this could be useful. No pressure." /></label><button className="primary" type="submit" disabled={busy}>{busy ? "Sending…" : "Send invitation"}</button>{status && <p className="form-status">{status}</p>}</form>;
 }

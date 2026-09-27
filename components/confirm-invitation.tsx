@@ -17,7 +17,7 @@ export function ConfirmInvitation({ token }: { token: string }) {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "Could not send the invitation.");
       setDone(true);
-      setMessage("Invitation sent. They can choose whether to accept it.");
+      setMessage("Invitation sent.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not send the invitation.");
     } finally { setBusy(false); }
