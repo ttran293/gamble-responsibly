@@ -44,6 +44,28 @@
 .onboarding-help p { color: var(--ink-muted); font-size: 14px; margin: 5px 0 10px; }
 .onboarding-help a, .pause-resources a { display: block; width: fit-content; color: var(--teal); font-size: 14px; font-weight: 600; margin-top: 7px; }
 .pause-resources { margin-top: 18px; }
+.onboarding-fit { padding-bottom: 20px; }
+.onboarding-fit .onboarding-header { height: 64px; }
+.onboarding-fit .onboarding-header .brand img { width: 36px; height: 36px; }
+.onboarding-fit .onboarding-header .nav-cta { min-height: 36px; padding: 6px 12px; white-space: nowrap; }
+.onboarding-fit .onboarding-card { max-width: 920px; margin-top: 20px; padding: 22px 24px 18px; }
+.onboarding-fit .onboarding-progress { margin-bottom: 14px; }
+.onboarding-fit .onboarding-progress > div { margin-top: 6px; }
+.onboarding-fit .onboarding-card h1 { font-size: clamp(26px, 3vw, 32px); line-height: 1.15; margin: 0 0 14px; }
+.onboarding-fit .onboarding-intro { font-size: 15px; margin: -4px 0 14px; }
+.onboarding-fit .onboarding-question { margin-bottom: 14px; }
+.onboarding-fit .onboarding-question legend { font-size: 16px; margin-bottom: 8px; }
+.onboarding-fit .onboarding-question > p { margin-bottom: 8px; }
+.onboarding-fit .onboarding-options { gap: 8px; }
+.onboarding-fit .onboarding-options.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.onboarding-fit .onboarding-options.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.onboarding-fit .onboarding-options.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.onboarding-fit .onboarding-option { align-items: center; min-height: 0; gap: 8px; padding: 8px 12px; }
+.onboarding-fit .onboarding-option:has(small) { align-items: flex-start; }
+.onboarding-fit .onboarding-option:has(small) input { margin-top: 2px; }
+.onboarding-fit .onboarding-option strong { font-size: 14px; }
+.onboarding-fit .onboarding-option small { margin-top: 2px; font-size: 12.5px; }
+.onboarding-fit .onboarding-actions { margin-top: 2px; padding-top: 12px; }
 .onboarding-generating { min-height: 290px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
 .onboarding-generating .onboarding-intro { margin-bottom: 0; }
 .onboarding-spinner { width: 38px; height: 38px; margin-bottom: 27px; border: 4px solid #dbe9dd; border-top-color: var(--teal); border-radius: 50%; animation: plan-spin .85s linear infinite; }
@@ -96,9 +118,13 @@
 .example-section .pattern-card h2 { margin-top: 10px; }
 .example-section .pattern-card .fineprint { margin-top: 16px; }
 
+@media (max-width: 900px) {
+  .onboarding-fit .onboarding-options.cols-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @media (max-width: 760px) {
   .onboarding-card { margin-top: 25px; padding: 27px 22px; }
-  .onboarding-options, .personal-overview-grid, .example-section .dashboard-grid { grid-template-columns: 1fr; }
+  .onboarding-fit .onboarding-card { margin-top: 16px; padding: 18px 16px; }
+  .onboarding-options, .onboarding-fit .onboarding-options.cols-3, .onboarding-fit .onboarding-options.cols-4, .onboarding-fit .onboarding-options.cols-5, .personal-overview-grid, .example-section .dashboard-grid { grid-template-columns: 1fr; }
   .onboarding-header > span:last-child { display: none; }
   .onboarding-target { flex-direction: column; }
   .onboarding-target input { width: 100%; }

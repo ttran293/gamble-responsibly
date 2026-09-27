@@ -33,6 +33,55 @@ function checkRows(rows: Record<string,string>[], id: string, provider: Provider
   }
 }
 export type Provider = "draftkings" | "fanduel" | "moonharbor";
+
+// These are explicitly complete synthetic account histories, including days
+// without entries. The source CSVs are private local fixtures; keep the newer
+// demo activity here so every installation produces the same preview.
+const demoCoverageFrom = "2026-07-15";
+const demoCoverageThrough = "2026-09-27T23:59:59.999Z";
+const extraActivity: Record<Provider, { date: string; stake: number; payout: number }[]> = {
+  draftkings: [
+    { date: "2026-09-16", stake: 1800, payout: 3420 },
+    { date: "2026-09-19", stake: 2200, payout: 0 },
+    { date: "2026-09-23", stake: 1400, payout: 2660 },
+    { date: "2026-09-27", stake: 2000, payout: 0 }
+  ],
+  fanduel: [
+    { date: "2026-08-23", stake: 1200, payout: 2280 },
+    { date: "2026-09-02", stake: 1600, payout: 0 },
+    { date: "2026-09-10", stake: 2000, payout: 3700 },
+    { date: "2026-09-18", stake: 1400, payout: 0 },
+    { date: "2026-09-27", stake: 1800, payout: 0 }
+  ],
+  moonharbor: [
+    { date: "2026-08-24", stake: 1100, payout: 2090 },
+    { date: "2026-09-04", stake: 1500, payout: 0 },
+    { date: "2026-09-12", stake: 1300, payout: 2470 },
+    { date: "2026-09-20", stake: 1700, payout: 0 },
+    { date: "2026-09-27", stake: 1200, payout: 2280 }
+  ]
+};
+
+function extendDemoHistory(provider: Provider, bets: Bet[], transactions: Transaction[]) {
+  const label = provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings";
+  let balance = transactions.at(-1)!.balance;
+  const bonusBalance = transactions.at(-1)!.bonusBalance;
+  const add = (id: string, at: string, type: string, cash: number, betId = "") => {
+    balance += cash;
+    if (balance < 0) throw new Error("Synthetic extension overdraws the demo account.");
+    transactions.push({ id, provider: label, at, type, cash, bonus: 0, balance, bonusBalance, betId, description: `Simulated ${type}` });
+  };
+  extraActivity[provider].forEach(({ date, stake, payout }, index) => {
+    const prefix = `sim_extra_${provider}_${index + 1}`;
+    const placedAt = `${date}T15:00:00.000Z`;
+    const settledAt = `${date}T17:00:00.000Z`;
+    if (index === 0) add(`${prefix}_deposit`, `${date}T14:00:00.000Z`, "deposit", 8000);
+    add(`${prefix}_wager`, placedAt, "wager", -stake, `${prefix}_bet`);
+    if (payout) add(`${prefix}_payout`, settledAt, "payout", payout, `${prefix}_bet`);
+    bets.push({ id: `${prefix}_bet`, placedAt, settledAt, status: payout ? "won" : "lost", stake, cashStake: stake, bonusStake: 0, payout, refund: 0, wagerId: `${prefix}_wager` });
+  });
+}
+
 export async function loadFixture(provider: Provider = "draftkings"): Promise<Snapshot> {
   const root = path.join(process.cwd(), "data", provider);
   const [b, t] = await Promise.all(["bets", "transactions"].map(async kind => parseCsv(await readFile(path.join(root, `${provider}_connected_${kind}.csv`), "utf8"))));
@@ -66,7 +115,8 @@ export async function loadFixture(provider: Provider = "draftkings"): Promise<Sn
     validateFanDuel(b, t, promotions, statements);
     supplemental = { promotions: promotions.length, statements: statements.length };
   }
-  return { supplemental, bets, transactions, loadedAt: new Date().toISOString(), from: transactions[0].at.slice(0,10), through: transactions.at(-1)!.at, provider: provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings", mode: "demo" };
+  extendDemoHistory(provider, bets, transactions);
+  return { supplemental, bets, transactions, loadedAt: new Date().toISOString(), from: demoCoverageFrom, through: demoCoverageThrough, provider: provider === "fanduel" ? "FanDuel" : provider === "moonharbor" ? "Moonharbor Sports (fictional)" : "DraftKings", mode: "demo" };
 }
 
 export function validateFanDuel(bets: Record<string,string>[], rows: Record<string,string>[], promotions: Record<string,string>[], statements: Record<string,string>[]) {

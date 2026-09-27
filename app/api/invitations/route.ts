@@ -1,52 +1,78 @@
-import { createHash, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { sql } from "drizzle-orm";
-import { db } from "../../../lib/db";
+import { pool } from "../../../lib/db";
+import { escapeHtml, invitationBaseUrl } from "../../../lib/invitation-email";
+import { hashInviteToken } from "../../../lib/invitations";
 import { invitationSchema } from "../../../lib/validation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
+const noStore = { "Cache-Control": "private, no-store" };
 
 export async function POST(request: Request) {
-  const emailFrom = process.env.EMAIL_FROM;
-  if (!emailFrom) {
-    return NextResponse.json({ error: "Email delivery is not configured yet. Add a verified Resend sender as EMAIL_FROM." }, { status: 503 });
+  if (request.headers.get("origin") !== new URL(request.url).origin) {
+    return NextResponse.json({ error: "Invalid request origin." }, { status: 403, headers: noStore });
   }
-  const parsed = invitationSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: "Please provide valid names and email addresses." }, { status: 400 });
+  if (!process.env.EMAIL_FROM || !process.env.RESEND_API_KEY) {
+    return NextResponse.json({ error: "Email delivery is unavailable." }, { status: 503, headers: noStore });
+  }
+  let baseUrl: string;
+  try { baseUrl = invitationBaseUrl(); }
+  catch { return NextResponse.json({ error: "Invitation links are unavailable." }, { status: 503, headers: noStore }); }
 
-  const { senderName, senderEmail, recipientEmail, note } = parsed.data;
-  const token = randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+  const parsed = invitationSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Please provide valid names and email addresses." }, { status: 400, headers: noStore });
+
+  const { senderName, note } = parsed.data;
+  const senderEmail = parsed.data.senderEmail.toLowerCase();
+  const recipientEmail = parsed.data.recipientEmail.toLowerCase();
+  const confirmToken = randomBytes(32).toString("base64url");
+  let invitationId: string;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    // Serialize quota checks and inserts so concurrent requests cannot pass the same limit.
+    await client.query("SELECT pg_advisory_xact_lock(23840, 1)");
+    const quota = await client.query<{ hourly: number; daily: number; sender: number; recipient: number }>(`
+      SELECT
+        count(*) FILTER (WHERE i.created_at > now() - interval '1 hour')::int AS hourly,
+        count(*)::int AS daily,
+        count(*) FILTER (WHERE c.email = $1)::int AS sender,
+        count(*) FILTER (WHERE i.recipient_email = $2)::int AS recipient
+      FROM invitations i JOIN support_contacts c ON c.id = i.support_contact_id
+      WHERE i.created_at > now() - interval '24 hours'
+    `, [senderEmail, recipientEmail]);
+    if (quota.rows[0].hourly >= 10 || quota.rows[0].daily >= 50 || quota.rows[0].sender >= 3 || quota.rows[0].recipient >= 3) {
+      await client.query("ROLLBACK");
+      return NextResponse.json({ error: "Too many invitation requests. Please try again later." }, { status: 429, headers: noStore });
+    }
+    const contact = await client.query<{ id: string }>(
+      "INSERT INTO support_contacts (name, email) VALUES ($1, $2) ON CONFLICT (email) DO UPDATE SET email = excluded.email RETURNING id",
+      [senderName, senderEmail]
+    );
+    const invitation = await client.query<{ id: string }>(`
+      INSERT INTO invitations (recipient_email, support_contact_id, token_hash, sender_confirm_token_hash, sender_name, note, expires_at, status)
+      VALUES ($1, $2, $3, $4, $5, $6, now() + interval '24 hours', 'pending_sender') RETURNING id
+    `, [recipientEmail, contact.rows[0].id, hashInviteToken(randomBytes(32).toString("base64url")), hashInviteToken(confirmToken), senderName, note ?? null]);
+    invitationId = invitation.rows[0].id;
+    await client.query("COMMIT");
+  } catch {
+    await client.query("ROLLBACK").catch(() => {});
+    return NextResponse.json({ error: "Could not create the invitation request." }, { status: 503, headers: noStore });
+  } finally { client.release(); }
 
   try {
-    const contact = await db.execute<{ id: string }>(sql`
-      insert into support_contacts (name, email) values (${senderName}, ${senderEmail.toLowerCase()})
-      on conflict (email) do update set name = excluded.name returning id
-    `);
-    const contactId = contact.rows[0].id;
-    const invitation = await db.execute<{ id: string }>(sql`
-      insert into invitations (recipient_email, support_contact_id, token_hash, note, expires_at, status)
-      values (${recipientEmail.toLowerCase()}, ${contactId}, ${hashToken(token)}, ${note ?? null}, ${expiresAt}, 'sent') returning id
-    `);
-    const inviteUrl = new URL(`/invite/${token}`, process.env.APP_URL ?? new URL(request.url).origin).toString();
-    const email = await resend.emails.send({
-      from: emailFrom,
-      to: recipientEmail,
-      subject: `${senderName} invited you to use Jelly`,
-      html: `<p>${senderName} invited you to use Jelly to track your betting habits and spending.</p><p>Joining is your choice. They cannot see your activity or finances.</p><p><a href="${inviteUrl}">Open invitation</a></p><p>This invitation expires in 72 hours.</p>`
+    const confirmationUrl = `${baseUrl}/invite/confirm/${confirmToken}`;
+    const result = await resend.emails.send({
+      from: process.env.EMAIL_FROM!,
+      to: senderEmail,
+      subject: "Confirm your Jelly invitation request",
+      html: `<p>Someone entered your email address to invite a person to Jelly.</p><p>If that was you, confirm the request to send the invitation. If it was not you, ignore this email.</p><p><a href="${escapeHtml(confirmationUrl)}">Confirm invitation request</a></p><p>This link expires in 24 hours.</p>`
     });
-    if (email.error) throw new Error(email.error.message);
-    await db.execute(sql`update invitations set resend_message_id = ${email.data?.id ?? null} where id = ${invitation.rows[0].id}`);
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error("Invitation email failed", error);
-    const testSender = emailFrom.includes("onboarding@resend.dev");
-    return NextResponse.json({
-      error: testSender
-        ? "Resend test mode can only deliver to its test recipient, delivered@resend.dev. Verify a domain to send to real email addresses."
-        : "We could not send that invitation. Please try again later."
-    }, { status: 503 });
+    if (result.error) throw new Error("Confirmation email failed");
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  } catch {
+    await pool.query("DELETE FROM invitations WHERE id = $1 AND status = 'pending_sender'", [invitationId!]).catch(() => {});
+    return NextResponse.json({ error: "Could not send the confirmation email. Please try again later." }, { status: 503, headers: noStore });
   }
 }

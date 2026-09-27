@@ -2,6 +2,7 @@ export type Bet = { provider?: string; id: string; placedAt: string; settledAt: 
 export type Transaction = { provider?: string; id: string; at: string; type: string; cash: number; bonus: number; balance: number; bonusBalance: number; betId: string; description: string };
 export type Snapshot = { supplemental?: { promotions: number; statements: number }; coverage?: { provider: string; from: string; through: string }[]; bets: Bet[]; transactions: Transaction[]; loadedAt: string; from: string; through: string; provider: string; mode: "demo" };
 export const day = (at: string) => at.slice(0, 10);
+export const lastCompleteDay = (through: string) => through.endsWith("T23:59:59.999Z") ? day(through) : shiftDay(day(through), -1);
 const DAY = 86400000;
 export const shiftDay = (date: string, delta: number) => new Date(Date.parse(date + "T00:00:00Z") + delta * DAY).toISOString().slice(0, 10);
 export function validDay(value: string) { return /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value; }
@@ -34,8 +35,8 @@ export function summarize(snapshot: Snapshot, from: string, to: string) {
   for (const d of daily) { run = d.count ? 0 : run + 1; longestBreak = Math.max(longestBreak, run); }
   const priorTo = shiftDay(from, -1), priorFrom = shiftDay(from, -days);
   const coverage = snapshot.coverage ?? [{ provider: snapshot.provider, from: snapshot.from, through: snapshot.through }];
-  const completeCoverage = coverage.every(c => from >= c.from && to <= day(c.through));
-  const priorAvailable = completeCoverage && coverage.every(c => priorFrom >= c.from && priorTo <= day(c.through));
+  const completeCoverage = coverage.every(c => from >= c.from && to <= lastCompleteDay(c.through));
+  const priorAvailable = completeCoverage && coverage.every(c => priorFrom >= c.from && priorTo <= lastCompleteDay(c.through));
   const priorBets = snapshot.bets.filter(b => day(b.placedAt) >= priorFrom && day(b.placedAt) <= priorTo);
   const comparison = priorAvailable ? { from: priorFrom, to: priorTo, bets: priorBets.length, cashStake: sum(priorBets, b => b.cashStake), activeDays: new Set(priorBets.map(b => day(b.placedAt))).size } : null;
   const open = snapshot.bets.filter(b => day(b.placedAt) <= to && (!b.settledAt || day(b.settledAt) > to));

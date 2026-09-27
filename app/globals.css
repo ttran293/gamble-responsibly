@@ -30,11 +30,30 @@
 .daily-column { flex:1; min-width:0; height:140px; display:flex; align-items:end; }
 .daily-column > div { width:100%; border-radius:3px 3px 0 0; }
 .daily-column:focus { outline:2px solid #243c30; outline-offset:2px; }
+.bet-free { margin-top:18px; }
+.bet-free-scroll { overflow-x:auto; }
+.bet-free-map { display:grid; grid-template-columns:max-content max-content; justify-content:start; column-gap:10px; row-gap:8px; width:max-content; }
+.bet-free-months { display:flex; grid-column:2; grid-row:1; height:16px; color:#6a7872; font-size:12px; line-height:16px; }
+.bet-free-months span { width:calc(var(--weeks) * 16px + (var(--weeks) - 1) * 4px); margin-right:4px; overflow:visible; white-space:nowrap; }
+.bet-free-months span:last-child { margin-right:0; }
+.bet-free-days { display:grid; grid-column:1; grid-row:2; grid-template-rows:repeat(7, 16px); gap:4px; color:#6a7872; font-size:11px; line-height:16px; }
+.bet-free-days span:nth-child(odd) { visibility:hidden; }
+.bet-free-weeks { display:flex; grid-column:2; grid-row:2; gap:4px; }
+.bet-free-week { display:flex; flex-direction:column; gap:4px; }
+.bet-free-cell { width:16px; height:16px; padding:0; border:0; border-radius:3px; background:#e7eeea; }
+.bet-free-cell.is-clear { background:#2f9e68; }
+.bet-free-cell.is-unknown { background:transparent; box-shadow:inset 0 0 0 1px #d5ddd6; }
+.bet-free-cell.is-pad { background:transparent; }
+.bet-free-cell:focus-visible { outline:2px solid #243c30; outline-offset:1px; }
+.bet-free-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 24px; margin-top:14px; }
+.bet-free-footer p { margin:0; color:#626d66; font-size:13px; }
+.bet-free-legend { display:flex; align-items:center; gap:6px; margin-left:auto; color:#6a7872; font-size:12px; }
+.bet-free-swatch { width:14px; height:14px; border-radius:3px; background:#e7eeea; }
+.bet-free-swatch.is-clear { background:#2f9e68; }
+.bet-free-tooltip { position:fixed; z-index:30; transform:translate(-50%, calc(-100% - 8px)); padding:6px 8px; border-radius:6px; background:#1d3c38; color:#fff; font-size:12px; line-height:1.35; white-space:nowrap; pointer-events:none; }
+.bet-free-tooltip.is-below { transform:translate(-50%, 8px); }
 .date-ends { display:flex; justify-content:space-between; margin:8px 0 20px; font-size:12px; color:#626d66; }
 .guardrail-fields { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:24px 0; }
-.metrics-table-scroll { overflow:auto; max-height:340px; }
-.metrics-table-scroll table { width:100%; border-collapse:collapse; margin-top:14px; font-size:14px; }
-.metrics-table-scroll td,.metrics-table-scroll th { padding:10px; text-align:left; border-bottom:1px solid #e6e9e1; }
 .metrics-dashboard .activity-row { grid-template-columns:minmax(0,1fr) max-content max-content; align-items:start; gap:18px; }
 .metrics-dashboard .activity-row > div { min-width:0; overflow-wrap:anywhere; }
 .metrics-dashboard .activity-row time { display:block; white-space:nowrap; }

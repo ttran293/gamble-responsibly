@@ -6,16 +6,24 @@ import { Resend } from "resend";
 import { db } from "./db";
 import * as schema from "../db/schema";
 
-const appUrl = process.env.APP_URL ?? "http://localhost:3000";
-const localDevelopment = process.env.NODE_ENV !== "production" && ["localhost", "127.0.0.1"].includes(new URL(appUrl).hostname);
-const localOrigins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
+const deployedUrl = "https://gamble-responsibly.vercel.app";
+const configuredUrl = new URL(process.env.APP_URL ?? "http://localhost:3000").origin;
+const isLoopback = ["localhost", "127.0.0.1"].includes(new URL(configuredUrl).hostname);
+// A local APP_URL must not become the production auth URL on Vercel.
+const appUrl = process.env.NODE_ENV === "production" && isLoopback ? deployedUrl : configuredUrl;
+const localDevelopment = process.env.NODE_ENV !== "production" && isLoopback;
+const localHosts = ["localhost:*", "127.0.0.1:*"];
+const localOrigins = localHosts.map(host => `http://${host}`);
+const productionOrigins = [...new Set([appUrl, deployedUrl])];
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const auth = betterAuth({
-  // Next can choose port 3001 when 3000 is occupied. Resolve only approved
-  // loopback hosts from each request so redirects and cookies use that port.
-  baseURL: localDevelopment ? { allowedHosts: localOrigins.map(origin => new URL(origin).host), fallback: appUrl, protocol: "http" } : appUrl,
-  trustedOrigins: localDevelopment ? [...new Set([appUrl, ...localOrigins])] : [appUrl],
+  // Next can choose another local port when 3000 is occupied. Resolve only
+  // approved loopback hosts so redirects and cookies use the active port.
+  baseURL: localDevelopment
+    ? { allowedHosts: localHosts, fallback: appUrl, protocol: "http" }
+    : { allowedHosts: productionOrigins.map(origin => new URL(origin).host), fallback: appUrl, protocol: "https" },
+  trustedOrigins: localDevelopment ? [...new Set([appUrl, ...localOrigins])] : productionOrigins,
   database: drizzleAdapter(db, { provider: "pg", schema }),
   session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
   emailAndPassword: { enabled: true },

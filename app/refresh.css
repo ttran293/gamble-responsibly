@@ -39,12 +39,15 @@ h1, h2 { font-family: inherit; letter-spacing: -.035em; }
 .brand { font-size: 22px; letter-spacing: -.035em; }
 .nav .brand { display: inline-flex; align-items: center; gap: 8px; }
 .nav .brand img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
+.home-nav { gap: 18px; }
+.home-session-label { color: var(--ink-muted); font-size: 13px; white-space: nowrap; }
+.home-session-label strong { color: var(--teal); }
+.home-nav .session-control .text-link { font-size: 14px; }
 .nav-cta, .urge, .urge-button, .outline, .period {
   border-radius: var(--radius-control);
 }
 .primary,
-.outline-button,
-.how-action .link {
+.outline-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -62,8 +65,7 @@ h1, h2 { font-family: inherit; letter-spacing: -.035em; }
   cursor: pointer;
 }
 .primary:hover,
-.outline-button:hover,
-.how-action:hover .link { background: #1c3b39; }
+.outline-button:hover { background: #1c3b39; }
 .invite .primary,
 .invite .primary:hover { background: var(--amber); color: var(--teal); }
 .primary:disabled,
@@ -190,9 +192,26 @@ button.text-link:hover { text-decoration: underline; }
   font-size: 16px;
   line-height: 1.5;
 }
-.how-action { background: #fff; border-color: var(--teal); padding-bottom: 32px; }
-.how-action p { margin-bottom: 22px; }
-.how-action .link { align-self: flex-start; margin-top: auto; margin-bottom: 0; }
+.how-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 18px;
+  padding: 20px 24px;
+  background: #fff;
+  border: 1px solid var(--teal);
+  border-radius: var(--radius-card);
+}
+.how-cta p {
+  margin: 0;
+  max-width: 520px;
+  color: var(--teal);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.how-cta .primary { flex: 0 0 auto; min-height: 48px; padding: 14px 22px; font-size: 16px; }
 .faq {
   max-width: 1110px;
   margin: 56px auto 0;
@@ -349,12 +368,12 @@ button.text-link:hover { text-decoration: underline; }
 }
 .private-nav .brand img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
 .private-dashboard { padding-top: 45px; }
-.private-dashboard a:not(.primary):not(.outline-button):not(.text-link) {
+.private-dashboard a:not(.primary):not(.outline-button):not(.text-link):not(.resource-card) {
   color: var(--teal);
   font-weight: 600;
   text-decoration: none;
 }
-.private-dashboard a:not(.primary):not(.outline-button):not(.text-link):hover { text-decoration: underline; }
+.private-dashboard a:not(.primary):not(.outline-button):not(.text-link):not(.resource-card):hover { text-decoration: underline; }
 .metrics-filters { align-items: flex-end; gap: 14px; margin: 22px 0 6px; }
 .metrics-filters label { gap: 6px; color: var(--ink-muted); font-size: 13px; font-weight: 600; }
 .metrics-filters input[type="date"] { height: 40px; padding: 0 12px; border: 1px solid #d3ddd6; border-radius: 12px; background: #fff; color: var(--teal); font-size: 14px; }
@@ -368,6 +387,7 @@ button.text-link:hover { text-decoration: underline; }
 .dashboard-tabs button[aria-selected="true"]::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--teal); content: ""; }
 .dashboard-tab-panel[hidden] { display: none; }
 .dashboard-tab-panel .connected-apps { margin-top: 25px; padding-top: 0; border-top: 0; }
+.dashboard-resources { max-width: none; margin: 28px 0 0; padding: 0; }
 .connected-apps {
   margin: 24px 0 28px;
   padding: 24px 0 0;
@@ -431,6 +451,15 @@ button.text-link:hover { text-decoration: underline; }
 .activity-panel { background: transparent; border: 0; padding: 15px 0; }
 .activity-row { font-size: 14px; }
 .activity-row small, .activity-row time { font-size: 12px; }
+.transaction-total { color: var(--ink-muted); font-size: 13px; white-space: nowrap; }
+.transaction-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px 20px; border-top: 1px solid var(--line); padding: 20px 0 4px; }
+.transaction-page-range { margin: 0; color: var(--ink-muted); font-size: 13px; }
+.transaction-page-buttons, .transaction-page-slot { display: flex; align-items: center; gap: 6px; }
+.transaction-page-buttons { flex-wrap: wrap; }
+.transaction-page-buttons button { min-width: 34px; min-height: 34px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 7px; background: #fffefa; color: var(--teal); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.transaction-page-buttons button:hover:not(:disabled), .transaction-page-buttons button.is-current { border-color: var(--teal); background: var(--teal); color: #fff; }
+.transaction-page-buttons button:disabled { opacity: .45; cursor: default; }
+.transaction-page-ellipsis { padding: 0 3px; color: var(--ink-muted); }
 .plan-card { border-radius: var(--radius-card); padding: 27px; }
 .pause-card { border-radius: var(--radius-dialog); }
 .pause-card h2 { font: 600 38px/1.1 'Source Sans 3', 'Segoe UI', sans-serif; letter-spacing: -.04em; }
@@ -442,6 +471,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 @media (max-width: 760px) {
+  .nav { height: auto; min-height: 78px; padding: 12px 20px; flex-wrap: wrap; gap: 10px; }
+  .home-nav { flex-wrap: wrap; justify-content: flex-end; gap: 10px 14px; }
   .dashboard-tabs { gap: 22px; overflow-x: auto; }
   .dashboard-tabs button { flex: 0 0 auto; }
   .hero { padding: 48px 20px 36px; }
@@ -455,6 +486,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .how h2, .faq h2, .resources h2 { font-size: 28px; }
   .resource-list { grid-template-columns: 1fr; }
   .how-grid { grid-template-columns: 1fr; }
+  .how-cta { align-items: stretch; flex-direction: column; }
+  .how-cta .primary { width: 100%; }
   .private-dashboard { padding-top: 30px; }
   .welcome-row h1 { font-size: 39px; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -463,6 +496,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .private-metric:nth-child(n+3) { border-bottom: 0; }
   .summary-strip { padding-top: 8px; }
   .activity-panel { padding: 8px 0; }
+  .transaction-pagination { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 480px) {

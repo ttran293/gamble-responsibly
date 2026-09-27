@@ -56,10 +56,10 @@ test('net settled losses exclude open bets and earlier loss notices survive a la
  const e=evaluate([rev(p)],[snapshot([lost,won,bet('open','2026-08-10T05:00:00Z',99999)])],'2026-08-10T06:00:00Z');
  assert.equal(e.progress[0].actual,0);assert.equal(e.notices.filter(n=>n.kind==='exceeded').length,1);
 });
-test('reduction uses a full baseline and saved real-time plans ignore old fixtures',async()=>{
+test('reduction uses a full baseline and saved plans ignore activity before activation',async()=>{
  const ss=await Promise.all(['draftkings','fanduel'].map(p=>loadFixture(p)));
  const p={...plan(),goal:'reduce',period:'weekly',providers:['draftkings','fanduel'],reduction:{metric:'betCount',baselineFrom:'2026-08-03',baselineTo:'2026-08-09',percent:25}};
  const target=reductionTarget(p,ss);assert.ok(target.baseline>0);assert.equal(target.limit,Math.floor(target.baseline*.75));
  assert.throws(()=>reductionTarget({...p,reduction:{...p.reduction,baselineFrom:'2026-08-04'}},ss));
- const now='2026-09-26T12:00:00Z';const e=evaluate([rev(p,'now',now)],ss,now);assert.equal(e.notices.length,0);assert.equal(e.progress[0].complete,false);
+ const now='2026-09-26T12:00:00Z';const e=evaluate([rev(p,'now',now)],ss,now);assert.equal(e.notices.length,0);assert.equal(e.progress[0].complete,true);
 });

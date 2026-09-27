@@ -16,7 +16,7 @@ function toggle<T extends string>(selected: T[], value: T) {
   return selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value];
 }
 
-function ChoiceGroup({ legend, description, options, selected, onSelect, onClear, multiple = false }: {
+function ChoiceGroup({ legend, description, options, selected, onSelect, onClear, multiple = false, columns }: {
   legend: string;
   description?: string;
   options: readonly Choice[];
@@ -24,11 +24,12 @@ function ChoiceGroup({ legend, description, options, selected, onSelect, onClear
   onSelect: (value: string) => void;
   onClear?: () => void;
   multiple?: boolean;
+  columns?: 3 | 4 | 5;
 }) {
   return <fieldset className="onboarding-question">
     <legend>{legend}</legend>
     {description && <p>{description}</p>}
-    <div className="onboarding-options">
+    <div className={columns ? `onboarding-options cols-${columns}` : "onboarding-options"}>
       {options.map((option) => <label key={option.value} className={`onboarding-option ${selected.includes(option.value) ? "selected" : ""}`}>
         <input type={multiple ? "checkbox" : "radio"} name={legend} value={option.value} checked={selected.includes(option.value)} onChange={() => onSelect(option.value)} />
         <span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span>
@@ -83,21 +84,18 @@ export function OnboardingForm({ initialAnswers, editing }: { initialAnswers: On
     </div> : <>
       <div className="onboarding-progress"><span>Step {step + 1} of 2</span><div aria-hidden="true"><i style={{ width: `${(step + 1) * 50}%` }} /></div></div>
       {step === 0 && <>
-        <p className="eyebrow">Start with your goal</p>
         <h1>{editing ? "Update your goal." : "What would you like to work toward?"}</h1>
-        <p className="onboarding-intro">Choose what feels right today. Jelly will recommend a plan you can review.</p>
-        <ChoiceGroup legend="My goal" options={goalOptions} selected={goalChosen ? [answers.goal] : []} onSelect={(value) => {
+        <ChoiceGroup legend="My goal" columns={3} options={goalOptions} selected={goalChosen ? [answers.goal] : []} onSelect={(value) => {
           update("goal", value as OnboardingAnswers["goal"]);
           setGoalChosen(true);
         }} />
-        <ChoiceGroup legend="What matters most to you?" description="Choose any, or leave this blank for now." options={focusOptions} selected={answers.focusAreas} multiple onSelect={(value) => update("focusAreas", toggle(answers.focusAreas, value as OnboardingAnswers["focusAreas"][number]))} />
+        <ChoiceGroup legend="What matters most to you?" description="Optional. Choose any, or leave this blank." columns={5} options={focusOptions} selected={answers.focusAreas} multiple onSelect={(value) => update("focusAreas", toggle(answers.focusAreas, value as OnboardingAnswers["focusAreas"][number]))} />
       </>}
       {step === 1 && <>
-        <p className="eyebrow">A little context</p>
         <h1>What does betting look like lately?</h1>
-        <p className="onboarding-intro">These answers are optional. They help us make the recommendations more relevant.</p>
-        <ChoiceGroup legend="About how often do you bet?" options={frequencyOptions} selected={answers.frequency ? [answers.frequency] : []} onSelect={(value) => update("frequency", value as OnboardingAnswers["frequency"])} onClear={() => update("frequency", null)} />
-        <ChoiceGroup legend="When are you more likely to bet?" description="Choose any that fit." options={triggerOptions} selected={answers.triggers} multiple onSelect={(value) => update("triggers", toggle(answers.triggers, value as OnboardingAnswers["triggers"][number]))} />
+        <p className="onboarding-intro">Optional. Skip anything that doesn&apos;t fit.</p>
+        <ChoiceGroup legend="About how often do you bet?" columns={4} options={frequencyOptions} selected={answers.frequency ? [answers.frequency] : []} onSelect={(value) => update("frequency", value as OnboardingAnswers["frequency"])} onClear={() => update("frequency", null)} />
+        <ChoiceGroup legend="When are you more likely to bet?" columns={4} options={triggerOptions} selected={answers.triggers} multiple onSelect={(value) => update("triggers", toggle(answers.triggers, value as OnboardingAnswers["triggers"][number]))} />
       </>}
       {status && <p className="onboarding-error" role="alert">{status}</p>}
       <div className="onboarding-actions">

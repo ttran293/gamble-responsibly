@@ -23,7 +23,7 @@ export const supportContacts = pgTable("support_contacts", {
   id: uuid("id").defaultRandom().primaryKey(), name: text("name").notNull(), email: text("email").notNull().unique(), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 });
 export const invitations = pgTable("invitations", {
-  id: uuid("id").defaultRandom().primaryKey(), recipientEmail: text("recipient_email").notNull(), supportContactId: uuid("support_contact_id").notNull().references(() => supportContacts.id), tokenHash: text("token_hash").notNull().unique(), note: text("note"), status: text("status").notNull(), resendMessageId: text("resend_message_id"), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), acceptedAt: timestamp("accepted_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+  id: uuid("id").defaultRandom().primaryKey(), recipientEmail: text("recipient_email").notNull(), supportContactId: uuid("support_contact_id").notNull().references(() => supportContacts.id), tokenHash: text("token_hash").notNull().unique(), senderConfirmTokenHash: text("sender_confirm_token_hash"), senderConfirmedAt: timestamp("sender_confirmed_at", { withTimezone: true }), senderName: text("sender_name"), note: text("note"), status: text("status").notNull(), resendMessageId: text("resend_message_id"), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), acceptedAt: timestamp("accepted_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 });
 export const userProfiles = pgTable("user_profiles", {
   userId: text("user_id").primaryKey(),
@@ -47,3 +47,22 @@ export const planActionCompletions = pgTable("plan_action_completions", {
   actionId: text("action_id").notNull(),
   completedAt: timestamp("completed_at", { withTimezone: true }).defaultNow().notNull()
 }, table => [primaryKey({ columns: [table.userId, table.actionId] })]);
+
+export const chatThreads = pgTable("chat_threads", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().unique().references(() => user.id, { onDelete: "cascade" }),
+  consentedAt: timestamp("consented_at", { withTimezone: true }).defaultNow().notNull(),
+  pendingToken: uuid("pending_token"),
+  pendingAt: timestamp("pending_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  threadId: uuid("thread_id").notNull().references(() => chatThreads.id, { onDelete: "cascade" }),
+  role: text("role").$type<"user" | "assistant">().notNull(),
+  content: text("content").notNull(),
+  safetyFlag: text("safety_flag").$type<"none" | "crisis" | "betting_advice" | "safety_fallback">().default("none").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});

@@ -18,6 +18,16 @@ export function PersonalSummary({ answers, detailed = false, snapshot }: { answe
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/emergency-contact", { cache: "no-store" }).then(async response => {
+      if (!response.ok) return;
+      const body = await response.json();
+      if (!cancelled && typeof body.name === "string") setEmergencyContact(body.name);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   useEffect(() => {
     let cancelled = false;
     fetch("/api/plan/actions", { cache: "no-store" }).then(async response => {
@@ -62,6 +72,11 @@ export function PersonalSummary({ answers, detailed = false, snapshot }: { answe
             <p>{triggers.length ? triggers.join(", ") : "Watch for patterns as you track."}</p>
             <small>These are your choices, not a diagnosis or prediction.</small>
           </div>
+          {emergencyContact && <div className="personal-card-row">
+            <strong>Emergency contact</strong>
+            <p>{emergencyContact}</p>
+            <small>Added because you joined from their invitation. They do not see your activity or spending.</small>
+          </div>}
         </div>
         <div className="personal-card-footer"><Link className="text-link" href="/onboarding">Change my goal →</Link></div>
       </article>

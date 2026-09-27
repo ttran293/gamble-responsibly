@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "chat:purge": "node --env-file=.env scripts/purge-chat.mjs"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.6",

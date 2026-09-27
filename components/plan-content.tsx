@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { OnboardingAnswers } from "../lib/onboarding";
+import { demoConnectionsToLoad, saveDemoConnections } from "../lib/demo-connections";
 import { combineSnapshots, type Snapshot } from "../lib/metrics/core";
 import { recommendedPlan } from "../lib/recommended-plan";
 import { PersonalSummary } from "./personal-summary";
-
-const providers = ["draftkings", "fanduel", "moonharbor"] as const;
-const storageKey = "stillwater-demo-connections-v1";
 
 export function PlanContent({ answers }: { answers: OnboardingAnswers }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -17,14 +15,16 @@ export function PlanContent({ answers }: { answers: OnboardingAnswers }) {
     let cancelled = false;
     async function load() {
       try {
-        const raw = JSON.parse(sessionStorage.getItem(storageKey) ?? "[]");
-        const selected = Array.isArray(raw) ? providers.filter(p => raw.includes(p)) : [];
+        const selected = demoConnectionsToLoad(true);
         const results = await Promise.all(selected.map(async provider => {
           const response = await fetch(`/api/demo/connections/${provider}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
           if (!response.ok) throw new Error("Could not load the connected activity. Recommendations are based on your answers for now.");
           return await response.json() as Snapshot;
         }));
-        if (!cancelled) setSnapshot(results.length ? combineSnapshots(results) : null);
+        if (!cancelled) {
+          try { saveDemoConnections(selected, true); } catch { /* Recommendations still use the loaded activity when storage is unavailable. */ }
+          setSnapshot(results.length ? combineSnapshots(results) : null);
+        }
       } catch (e) { if (!cancelled) setError(e instanceof Error ? e.message : "Could not load connected activity."); }
       finally { if (!cancelled) setLoading(false); }
     }

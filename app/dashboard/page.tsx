@@ -6,6 +6,7 @@ import { db } from "../../lib/db";
 import { onboardingSchema } from "../../lib/onboarding";
 import { userProfiles } from "../../db/schema";
 import { eq } from "drizzle-orm";
+import { ChatWidget } from "../../components/chat-panel";
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -16,5 +17,5 @@ export default async function DashboardPage() {
   }).from(userProfiles).where(eq(userProfiles.userId, session.user.id)).limit(1);
   const parsed = onboardingSchema.safeParse(profile?.answers);
   if (!profile?.completedAt || !parsed.success || !["stay", "reduce", "stop"].includes(parsed.data.goal)) redirect("/onboarding");
-  return <ConnectedDashboard name={session.user.name || "there"} answers={parsed.data} />;
+  return <><ConnectedDashboard name={session.user.name || "there"} answers={parsed.data} /><ChatWidget goal={parsed.data.goal as "stay" | "reduce" | "stop"} /></>;
 }

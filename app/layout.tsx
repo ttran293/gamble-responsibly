@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./refresh.css";
 import "./onboarding.css";
+import "./chat.css";
 
 export const metadata = {
   title: "Jelly",

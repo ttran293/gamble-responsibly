@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
+import { clearDemoConnections } from "../lib/demo-connections";
 
-export function SignOutButton() {
+export function SignOutButton({ redirectTo = "/sign-in" }: { redirectTo?: "/" | "/sign-in" }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function signOut() {
@@ -11,8 +12,10 @@ export function SignOutButton() {
     try {
       const { error } = await authClient.signOut();
       if (error) throw new Error(error.message ?? "Could not sign out.");
-      try { sessionStorage.removeItem("stillwater-demo-connections-v1"); } catch { /* Storage may be disabled. */ }
-      window.location.replace("/sign-in");
+      const sessionResponse = await fetch("/api/auth/get-session", { cache: "no-store", credentials: "same-origin" });
+      if (!sessionResponse.ok || (await sessionResponse.json())?.session) throw new Error("The session is still active. Please try signing out again.");
+      try { clearDemoConnections(); } catch { /* Storage may be disabled. */ }
+      window.location.replace(redirectTo);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not sign out.");
       setBusy(false);

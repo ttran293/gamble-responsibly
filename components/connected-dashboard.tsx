@@ -1,18 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { demoConnectionsToLoad, saveDemoConnections, type DemoConnectionProvider } from "../lib/demo-connections";
 import { combineSnapshots, type Snapshot } from "../lib/metrics/core";
 import type { OnboardingAnswers } from "../lib/onboarding";
 import { PrivateDashboard } from "./private-dashboard";
 import { PersonalSummary } from "./personal-summary";
 import { SignOutButton } from "./sign-out-button";
 
-type Provider = "draftkings" | "fanduel" | "moonharbor";
+type Provider = DemoConnectionProvider;
 type Connection = { status: "disconnected" | "connecting" | "connected" | "error"; snapshot?: Snapshot; error?: string };
 const providers: Provider[] = ["draftkings", "fanduel", "moonharbor"];
 const names = { draftkings: "DraftKings", fanduel: "FanDuel", moonharbor: "Moonharbor Sports (fictional)" };
 const logos = { draftkings: "/draftkings.svg", fanduel: "/fanduel.svg", moonharbor: "/moonharbor.svg" };
-const storageKey = "stillwater-demo-connections-v1";
 const initial = (): Record<Provider, Connection> => ({ draftkings: {status:"disconnected"}, fanduel: {status:"disconnected"}, moonharbor: {status:"disconnected"} });
 
 export function ConnectedDashboard({ screen = "dashboard", name = "Demo", demo = false, signedIn = false, answers }: { screen?: "dashboard" | "connections"; name?: string; demo?: boolean; signedIn?: boolean; answers?: OnboardingAnswers }) {
@@ -27,7 +27,7 @@ export function ConnectedDashboard({ screen = "dashboard", name = "Demo", demo =
     let cancelled = false;
     async function restore() {
       let saved: Provider[] = [];
-      try { const parsed = JSON.parse(sessionStorage.getItem(storageKey) ?? "[]"); if(Array.isArray(parsed)) saved = providers.filter(p=>parsed.includes(p)); }
+      try { saved = demoConnectionsToLoad(!demo); }
       catch { setStorageError(true); }
       const restored = initial();
       await Promise.all(saved.map(async p => {
@@ -38,12 +38,12 @@ export function ConnectedDashboard({ screen = "dashboard", name = "Demo", demo =
     }
     void restore();
     return ()=>{cancelled=true;};
-  }, []);
+  }, [demo]);
   useEffect(() => {
     if(!ready) return;
-    try { sessionStorage.setItem(storageKey,JSON.stringify(providers.filter(p=>connections[p].snapshot))); }
+    try { saveDemoConnections(providers.filter(p=>connections[p].snapshot), !demo && providers.every(p=>connections[p].status!=="error")); }
     catch { setStorageError(true); }
-  },[connections,ready]);
+  },[connections,ready,demo]);
 
   async function connect(provider: Provider) {
     if(busy.current.has(provider)) return;
@@ -102,5 +102,5 @@ export function ConnectedDashboard({ screen = "dashboard", name = "Demo", demo =
     {providers.filter(p=>connections[p].status==="error").map(p=><p role="alert" key={p}>{names[p]}: {connections[p].error} {connections[p].snapshot?"Showing previously loaded data.":"Not included in metrics."} <a className="text-link" href="/connect">Retry connection</a></p>)}
   </>;
   if(snapshot) return <PrivateDashboard key={filtered.join(",")} name={name} snapshot={snapshot} planSnapshot={planSnapshot} demo={demo} answers={answers} connectionControls={controls} metricsOnly={supported.length === 0} stopping={supported.length > 0 && !demo && answers?.goal === "stop"}/>;
-  return <><div className="private-nav"><a className="brand" href="/"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</a>{!demo && <SignOutButton />}</div><main className="private-dashboard metrics-dashboard">{!demo&&answers&&<PersonalSummary answers={answers}/>}<section className="panel"><h1>{ready?"Connect a demo account to begin":"Loading demo connections…"}</h1><p>Demo connection · Synthetic data</p><p>Connect DraftKings, FanDuel, or fictional Moonharbor to view activity and combined metrics.</p><a className="primary" href="/connect">Connect accounts →</a></section>{ready&&manager}</main></>;
+  return <><div className="private-nav"><a className="brand" href="/"><img src="/jelly-logo.gif?v=3" alt="" />Jelly</a>{!demo && <div className="session-links"><SignOutButton /></div>}</div><main className="private-dashboard metrics-dashboard">{!demo&&answers&&<PersonalSummary answers={answers}/>}<section className="panel"><h1>{ready?"Connect a demo account to begin":"Loading demo connections…"}</h1><p>Demo connection · Synthetic data</p><p>Connect DraftKings, FanDuel, or fictional Moonharbor to view activity and combined metrics.</p><a className="primary" href="/connect">Connect accounts →</a></section>{ready&&manager}</main></>;
 }
