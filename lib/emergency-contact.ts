@@ -1,10 +1,12 @@
 import { randomBytes } from "crypto";
-import { and, desc, eq, gt, isNull } from "drizzle-orm";
-import { emergencyContactLinks, emergencyContactRequests, supportContacts, user } from "../db/schema";
+import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
+import { emergencyContactLinks, emergencyContactRequests, invitations, supportContacts, user } from "../db/schema";
 import { db, pool } from "./db";
 import { hashInviteToken } from "./invitations";
+import { demoInvitationSenderEmail } from "./invitation-email";
 
 export type EmergencyContact = { name: string; email: string };
+export type PendingEmergencyContact = EmergencyContact & { status: "pending" | "demo" };
 export type EmergencyContactPreview = {
   requesterName: string;
   valid: boolean;
@@ -12,27 +14,41 @@ export type EmergencyContactPreview = {
 };
 
 export async function activeEmergencyContact(userId: string): Promise<EmergencyContact | null> {
-  const [row] = await db.select({ name: supportContacts.name, email: supportContacts.email }).from(emergencyContactLinks)
+  const [row] = await db.select({ name: supportContacts.name, email: supportContacts.email, supportContactId: emergencyContactLinks.supportContactId }).from(emergencyContactLinks)
     .innerJoin(supportContacts, eq(emergencyContactLinks.supportContactId, supportContacts.id))
     .where(and(eq(emergencyContactLinks.userId, userId), isNull(emergencyContactLinks.revokedAt)))
     .orderBy(desc(emergencyContactLinks.consentedAt))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+  if (row.email !== demoInvitationSenderEmail) return { name: row.name, email: row.email };
+  const [invite] = await db.select({ senderName: invitations.senderName }).from(invitations)
+    .innerJoin(user, eq(invitations.recipientEmail, user.email))
+    .where(and(
+      eq(user.id, userId),
+      eq(invitations.supportContactId, row.supportContactId),
+      eq(invitations.status, "accepted")
+    ))
+    .orderBy(desc(invitations.acceptedAt))
+    .limit(1);
+  return { name: invite?.senderName ?? row.name, email: row.email };
 }
 
-export async function pendingEmergencyContactRequest(userId: string): Promise<EmergencyContact | null> {
+export async function pendingEmergencyContactRequest(userId: string): Promise<PendingEmergencyContact | null> {
   const [row] = await db.select({
     name: emergencyContactRequests.contactName,
-    email: emergencyContactRequests.contactEmail
+    email: emergencyContactRequests.contactEmail,
+    status: emergencyContactRequests.status
   }).from(emergencyContactRequests)
     .where(and(
       eq(emergencyContactRequests.userId, userId),
-      eq(emergencyContactRequests.status, "pending"),
-      gt(emergencyContactRequests.expiresAt, new Date())
+      or(
+        eq(emergencyContactRequests.status, "demo"),
+        and(eq(emergencyContactRequests.status, "pending"), gt(emergencyContactRequests.expiresAt, new Date()))
+      )
     ))
     .orderBy(desc(emergencyContactRequests.createdAt))
     .limit(1);
-  return row ?? null;
+  return row ? { ...row, status: row.status as PendingEmergencyContact["status"] } : null;
 }
 
 export async function createEmergencyContactRequest(userId: string, accountEmail: string, name: string, email: string): Promise<{ ok: true; id: string; token: string } | { ok: false; error: string; status: number }> {
@@ -66,9 +82,27 @@ export async function createEmergencyContactRequest(userId: string, accountEmail
 
 export async function supersedeOtherEmergencyContactRequests(userId: string, keepId: string) {
   await pool.query(
-    "UPDATE emergency_contact_requests SET status = 'superseded' WHERE user_id = $1 AND id <> $2 AND status = 'pending'",
+    "UPDATE emergency_contact_requests SET status = 'superseded' WHERE user_id = $1 AND id <> $2 AND status IN ('pending', 'demo')",
     [userId, keepId]
   );
+}
+
+export async function markDemoEmergencyContactRequest(userId: string, id: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const marked = await client.query("UPDATE emergency_contact_requests SET status = 'demo' WHERE id = $1 AND user_id = $2 AND status = 'pending' RETURNING id", [id, userId]);
+    if (!marked.rowCount) throw new Error("The emergency contact request is no longer pending.");
+    await client.query("UPDATE emergency_contact_requests SET status = 'superseded' WHERE user_id = $1 AND id <> $2 AND status IN ('pending', 'demo')", [userId, id]);
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally { client.release(); }
+}
+
+export async function removeDemoEmergencyContactRequest(userId: string) {
+  return pool.query("DELETE FROM emergency_contact_requests WHERE user_id = $1 AND status = 'demo' RETURNING id", [userId]);
 }
 
 export async function deleteEmergencyContactRequest(id: string) {

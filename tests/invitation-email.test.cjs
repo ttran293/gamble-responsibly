@@ -2,7 +2,8 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const ts = require('typescript'), fs = require('node:fs');
 require.extensions['.ts'] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { esModuleInterop: true, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, filename);
-const { escapeHtml, invitationBaseUrl, invitationEmailFailureMessage } = require('../lib/invitation-email.ts');
+const { escapeHtml, invitationBaseUrl, invitationEmailFailureMessage, isResendTestSender, isResendTestingError } = require('../lib/invitation-email.ts');
+const { invitationSchema } = require('../lib/validation.ts');
 
 test('sender supplied markup is escaped before insertion into email HTML', () => {
   assert.equal(escapeHtml('<a href="https://bad.example">Sam & Lee</a>'), '&lt;a href=&quot;https://bad.example&quot;&gt;Sam &amp; Lee&lt;/a&gt;');
@@ -33,4 +34,17 @@ test('invitation email failures explain test mode without exposing the account a
   assert.doesNotMatch(message, /owner@example.com/);
   assert.equal(invitationEmailFailureMessage(new Error('network down'), 'confirmation'), 'Could not send the confirmation email. Please try again later.');
   assert.equal(invitationEmailFailureMessage(new Error('network down'), 'invitation'), 'Could not send the invitation. Please try again later.');
+});
+
+test('the Resend test sender and recipient restriction are detected for demo contacts', () => {
+  assert.equal(isResendTestSender('Jelly <onboarding@resend.dev>'), true);
+  assert.equal(isResendTestSender('Jelly <hello@myjelly.club>'), false);
+  assert.equal(isResendTestingError({ message: 'You can only send testing emails to your own email address (owner@example.com).' }), true);
+  assert.equal(isResendTestingError(new Error('network down')), false);
+});
+
+test('demo invitations require the fixed Jelly sender address', () => {
+  const invitation = { senderName: 'Sam', senderEmail: 'onboarding@resend.dev', recipientEmail: 'friend@example.com' };
+  assert.equal(invitationSchema.safeParse(invitation).success, true);
+  assert.equal(invitationSchema.safeParse({ ...invitation, senderEmail: 'someone@example.com' }).success, false);
 });

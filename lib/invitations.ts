@@ -20,7 +20,7 @@ export async function previewInvitation(token: string): Promise<InvitePreview> {
     status: invitations.status,
     expiresAt: invitations.expiresAt,
     note: invitations.note,
-    senderName: supportContacts.name,
+    senderName: invitations.senderName,
     senderEmail: supportContacts.email,
     senderConfirmedAt: invitations.senderConfirmedAt
   }).from(invitations)
@@ -28,7 +28,7 @@ export async function previewInvitation(token: string): Promise<InvitePreview> {
     .where(eq(invitations.tokenHash, hashInviteToken(token)))
     .limit(1);
   if (!row) return { senderName: "", senderEmail: null, recipientEmail: "", note: null, valid: false, reason: "missing" };
-  const preview = { senderName: row.senderName, senderEmail: row.senderConfirmedAt ? row.senderEmail : null, recipientEmail: row.recipientEmail, note: row.note };
+  const preview = { senderName: row.senderName ?? "Someone", senderEmail: row.senderConfirmedAt ? row.senderEmail : null, recipientEmail: row.recipientEmail, note: row.note };
   if (row.status !== "sent") return { ...preview, valid: false, reason: "used" };
   if (row.expiresAt.getTime() <= Date.now()) return { ...preview, valid: false, reason: "expired" };
   return { ...preview, valid: true };
@@ -42,7 +42,7 @@ export async function acceptInvitation(userId: string, email: string, token: str
       status: invitations.status,
       expiresAt: invitations.expiresAt,
       supportContactId: invitations.supportContactId,
-      senderName: supportContacts.name
+      senderName: invitations.senderName
     }).from(invitations)
       .innerJoin(supportContacts, eq(invitations.supportContactId, supportContacts.id))
       .where(eq(invitations.tokenHash, hashInviteToken(token)))
@@ -59,12 +59,12 @@ export async function acceptInvitation(userId: string, email: string, token: str
     )).limit(1);
 
     if (invite.status === "accepted") {
-      if (existing) return { ok: true, senderName: invite.senderName };
+      if (existing) return { ok: true, senderName: invite.senderName ?? "Someone" };
       return { ok: false, error: "This invitation has already been used.", status: 409 };
     }
     if (invite.status !== "sent") return { ok: false, error: "This invitation is not valid.", status: 404 };
     if (!existing) await tx.insert(emergencyContactLinks).values({ userId, supportContactId: invite.supportContactId });
     await tx.update(invitations).set({ status: "accepted", acceptedAt: new Date() }).where(and(eq(invitations.id, invite.id), eq(invitations.status, "sent")));
-    return { ok: true, senderName: invite.senderName };
+    return { ok: true, senderName: invite.senderName ?? "Someone" };
   });
 }

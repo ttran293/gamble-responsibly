@@ -77,7 +77,7 @@ export default function PrivacyPage() {
               <tr><td>Demo activity choices</td><td>Selected sample apps and demo dataset version</td><td>When you save onboarding answers while signed in</td></tr>
               <tr><td>Limits and plan progress</td><td>Guardrail settings and notices you save, and checklist items you mark done</td><td>When you save them while signed in</td></tr>
               <tr><td>Messages</td><td>Chat messages you send, replies, and a safety flag such as crisis or betting advice</td><td>After you accept the chat disclosure</td></tr>
-              <tr><td>Invitations</td><td>Sender name, sender email, recipient email, and an optional note</td><td>When someone requests an invitation</td></tr>
+              <tr><td>Invitations</td><td>Sender name, Jelly's demo sender email, recipient email, and an optional note</td><td>When someone requests an invitation</td></tr>
               <tr><td>Emergency contact</td><td>The link between an account and a contact, including the time consent was recorded</td><td>When you create an account from an invitation</td></tr>
             </tbody>
           </table>
@@ -125,9 +125,10 @@ export default function PrivacyPage() {
 
         <section id="others">
           <h2>Information from someone else</h2>
-          <p>If someone enters your email address to invite you, we receive that address, the sender’s name and email address, and any note they wrote, from the sender. We email you the invitation directly. The sender's email address has not been confirmed. You can ignore the invitation.</p>
-          <p>Creating an account from the invitation is your choice. If you do, the sender becomes your emergency contact. They do not receive your habit record, spending, goal, dashboard, or chat.</p>
+          <p>If someone enters your email address to invite you, we receive that address, the sender’s name, and any note they wrote. The demo form uses Jelly's sender address. We email you the invitation directly when email delivery is available. You can ignore the invitation.</p>
+          <p>Creating an account from a demo invitation is your choice. If you do, the sender becomes your emergency contact in Jelly. The shared demo address cannot deliver personal notices to them. They cannot see your habit record, spending, goal, dashboard, or chat.</p>
           <p>If someone with a Jelly account asks you to be their emergency contact, we email you their name, their email address, and a link. The link expires in 72 hours. You can ignore that email. If you accept, you do not receive their habit record, spending, goal, dashboard, or chat.</p>
+          <p>If email delivery is in test mode or an entered address is invalid, Jelly can save a demo contact without sending an email. A demo contact has not accepted and cannot receive notices.</p>
         </section>
 
         <section id="recipients">

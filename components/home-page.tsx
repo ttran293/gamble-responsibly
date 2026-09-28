@@ -61,7 +61,7 @@ type HowStep = { n: string; title: string; body: string; href?: string; action?:
 const friendSteps: HowStep[] = [
   { n: "01", title: "You're worried about someone", body: "Someone you care about is struggling with gambling, and you want to help." },
   { n: "02", title: "Invite them to track a goal", body: "Jelly tracks their habit and goal, and helps them gamble less, or stop." },
-  { n: "03", title: "Be there when it gets hard", body: "If they join from your invitation, you become their emergency contact. Jelly lets you know when a streak of not betting breaks, or when they want to bet and want to reach out.", href: "/supporter", action: "Send invitation", cta: "Send an invitation when you're ready." }
+  { n: "03", title: "Be there when it gets hard", body: "If they join from your invitation, you become their emergency contact in Jelly. The demo sender address is shared, so personal email notices are not available yet.", href: "/supporter", action: "Send invitation", cta: "Send an invitation when you're ready." }
 ];
 
 const trackerSteps: HowStep[] = [
@@ -73,7 +73,7 @@ const trackerSteps: HowStep[] = [
 const faqs = [
   { q: "Who is Jelly for?", a: "Someone who wants to track their own habit and reach a goal to gamble less, or stop. And someone who wants to help a person they care about do the same." },
   { q: "What do I track?", a: "Your gambling habit, and a goal to gamble less or stop. Jelly helps you work toward that goal." },
-  { q: "What if I invite someone I care about?", a: "They decide whether to join and set their own goal. If they create an account from your invitation, you become their emergency contact. Jelly notifies you when a streak of not betting breaks, or when they want to bet and want to reach out." },
+  { q: "What if I invite someone I care about?", a: "They decide whether to join and set their own goal. If they create an account from your invitation, you become their emergency contact in Jelly. Demo invitations use Jelly's shared sender address, so personal email notices are not available yet." },
   { q: "What does an emergency contact see?", a: "Only those notices. You do not see their habit record, spending, or goal details unless they choose to share them." },
   { q: "Can I use Jelly without an emergency contact?", a: "Yes. Tracking your own habit and goal does not require anyone else. You can request one from your dashboard if you want someone notified when you are struggling." }
 ];

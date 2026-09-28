@@ -9,15 +9,9 @@ Gambling activity can be hard to see clearly when bets and transactions are spre
 There are two ways into the experience:
 
 - **For yourself:** Create an account, choose a goal, explore the activity dashboard, and use a plan and guardrails to check progress.
-- **For someone you care about:** Send an invitation. The recipient decides whether to join and keeps control of their goal and data. They can also choose an emergency contact for support.
+- **For someone you care about:** Send an invitation. The recipient decides whether to join and keeps control of their goal and data. T
 
 The dashboard includes an optional support chat and links to outside help. Emergency contacts cannot view a person's dashboard, spending, goals, or conversations.
-
-## Current prototype
-
-The public [demo](http://localhost:3000/demo) and the signed-in dashboard use **synthetic data** for sample sportsbook accounts, including DraftKings, FanDuel, and a fictional provider. The sample connections illustrate how Jelly could bring activity from several places together; they are not live sportsbook connections. The two included demo datasets let you explore different example histories.
-
-The app saves goals, onboarding answers, guardrails, plan progress, invitations, emergency-contact requests, and chat. Activity imports and live account connections are not implemented. Jelly's limits and pause plans are reflection tools: they do not place limits on sportsbook accounts or block bets.
 
 ## Run locally
 
@@ -44,7 +38,7 @@ Apply the SQL migrations in `db/migrations/` in numbered order (`0000` through `
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), or go straight to the [public demo](http://localhost:3000/demo). Resend's test sender can deliver only to approved test recipients; verify a sending domain to use real addresses.
+Open [http://localhost:3000](http://localhost:3000), or go straight to the [public demo](http://localhost:3000/demo). With Resend's test sender, emergency contacts are saved as demo entries without sending email or enabling notices. Verify a sending domain and set `EMAIL_FROM` to an address on that domain to send real requests to other recipients.
 
 ## Project status
 

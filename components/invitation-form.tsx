@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { demoInvitationSenderEmail } from "../lib/invitation-email";
 
 export function InvitationForm() {
   const [status, setStatus] = useState("");
@@ -17,5 +18,5 @@ export function InvitationForm() {
     } catch { setStatus("Could not send the invitation. Please try again."); }
     finally { setBusy(false); }
   }
-  return <form className="simple-form" onSubmit={submit}><div className="two-fields"><label>Your name<input required name="senderName" placeholder="Your name" /></label><label>Your email<input required name="senderEmail" type="email" placeholder="you@example.com" /></label></div><label>Their email address<input required name="recipientEmail" type="email" placeholder="them@example.com" /></label><label>Optional note<textarea name="note" maxLength={500} placeholder="I thought this could be useful. No pressure." /></label><button className="primary" type="submit" disabled={busy}>{busy ? "Sending…" : "Send invitation"}</button>{status && <p className="form-status">{status}</p>}</form>;
+  return <form className="simple-form" onSubmit={submit}><div className="two-fields"><label>Your name<input required name="senderName" placeholder="Your name" /></label><label>Jelly sender email<input required readOnly aria-readonly="true" name="senderEmail" type="email" value={demoInvitationSenderEmail} /></label></div><label>Their email address<input required name="recipientEmail" type="email" placeholder="them@example.com" /></label><label>Optional note<textarea name="note" maxLength={500} placeholder="I thought this could be useful. No pressure." /></label><button className="primary" type="submit" disabled={busy}>{busy ? "Sending…" : "Send invitation"}</button>{status && <p className="form-status">{status}</p>}</form>;
 }
