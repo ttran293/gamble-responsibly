@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
 import { clearDemoConnections } from "../lib/demo-connections";
+import { accountEmailForInput } from "../lib/demo-email";
 
 export function SignInForm() {
   const [email, setEmail] = useState("");
@@ -16,12 +17,13 @@ export function SignInForm() {
     setBusy(true);
     setStatus("Signing in…");
     try {
-      const { error } = await authClient.signIn.email({ email, password, rememberMe, callbackURL: "/dashboard" });
+      const accountEmail = await accountEmailForInput(email);
+      const { error } = await authClient.signIn.email({ email: accountEmail.email, password, rememberMe, callbackURL: "/dashboard" });
       if (error) { setStatus(error.message ?? "We could not sign you in. Check your details and try again."); return; }
       try { clearDemoConnections(); } catch { /* The dashboard still offers a version choice when storage is unavailable. */ }
       window.location.assign("/dashboard");
     } catch { setStatus("Could not reach sign-in. Check that the app is running and try again."); }
     finally { setBusy(false); }
   }
-  return <form className="simple-form" onSubmit={submit}><label>Email address<input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label><label>Password<input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" /></label><label className="auth-remember"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} /> Stay signed in on this device</label><button className="primary" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in →"}</button>{status && <p className="form-status" role="status">{status}</p>}</form>;
+  return <form className="simple-form" onSubmit={submit}><label>Email address or demo ID<input required type="text" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label><label>Password<input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" /></label><label className="auth-remember"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} /> Stay signed in on this device</label><button className="primary" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in →"}</button>{status && <p className="form-status" role="status">{status}</p>}</form>;
 }

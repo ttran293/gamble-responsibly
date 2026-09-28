@@ -82,12 +82,15 @@ export function EmergencyContactCard() {
         <span className="eyebrow">Someone who can help</span>
         <h2 id="emergency-contact-heading">Emergency contact</h2>
         {displayName && <p className="emergency-contact-name">{displayName}</p>}
+        {pending?.status === "pending" && <p className="emergency-contact-email">Request sent to {pending.email}. They become your emergency contact only if they accept.</p>}
+        {pending?.status === "demo" && <>
+          <p className="emergency-contact-email">Demo contact: {pending.email}</p>
+          <button type="button" className="text-link emergency-contact-remove" disabled={busy} onClick={() => void removeDemo()}>Remove demo contact</button>
+        </>}
       </div>
     </div>
     {!loaded && <p role="status">Checking your emergency contact…</p>}
     {loadError && <p role="alert">{loadError}</p>}
-    {pending?.status === "pending" && <p>Request sent to {pending.email}. They become your emergency contact only if they accept.</p>}
-    {pending?.status === "demo" && <><p>Demo contact: {pending.email}</p><button type="button" className="text-link" disabled={busy} onClick={() => void removeDemo()}>Remove demo contact</button></>}
     {warning && <div role="alert" className="onboarding-error"><span>{warning}</span> <button type="button" className="text-link" onClick={() => setWarning("")} aria-label="Dismiss demo contact warning">Dismiss</button></div>}
     {showForm && <>
       <p>You do not have an emergency contact yet. Request one if you want someone notified when you need support. If email delivery is unavailable or the address is invalid, Jelly saves it as a demo contact and shows a warning.</p>

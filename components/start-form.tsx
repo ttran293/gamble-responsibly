@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
 import { clearDemoConnections } from "../lib/demo-connections";
+import { accountEmailForInput } from "../lib/demo-email";
 
 export function StartForm({ invite }: { invite?: { token: string; senderName: string; senderEmail: string | null; recipientEmail: string; note: string | null } | null }) {
   const [name, setName] = useState("");
@@ -28,9 +29,10 @@ export function StartForm({ invite }: { invite?: { token: string; senderName: st
     event.preventDefault();
     setStatus(accountReady ? "Adding your emergency contact…" : "Creating your private account…");
     if (!accountReady) {
-      const { error } = await authClient.signUp.email({ name: name || "Jelly member", email, password, callbackURL: "/dashboard" });
+      const accountEmail = invite ? { email: invite.recipientEmail, demo: false } : await accountEmailForInput(email);
+      const { error } = await authClient.signUp.email({ name: name || "Jelly member", email: accountEmail.email, password, callbackURL: "/dashboard" });
       if (error) { setStatus(error.message ?? "We could not create that account."); return; }
-      void authClient.sendVerificationEmail({ email, callbackURL: "/dashboard" });
+      if (!accountEmail.demo) void authClient.sendVerificationEmail({ email: accountEmail.email, callbackURL: "/dashboard" });
       try { clearDemoConnections(); } catch { /* The dashboard still offers a version choice when storage is unavailable. */ }
     }
     if (invite && !await acceptInvite()) return;
@@ -39,7 +41,8 @@ export function StartForm({ invite }: { invite?: { token: string; senderName: st
   return <form className="simple-form" onSubmit={submit}>
     {invite?.note && <p className="privacy-copy">Their note: “{invite.note}”</p>}
     <label>First name or nickname<input value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex" /></label>
-    <label>Email address<input required type="email" readOnly={Boolean(invite)} aria-readonly={invite ? true : undefined} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label>
+    <label>Email address or demo ID<input required type="text" inputMode="email" readOnly={Boolean(invite)} aria-readonly={invite ? true : undefined} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label>
+    {!invite && <p className="privacy-copy">For a demo, you can use a made-up address or name. Use the same entry when you sign in later. Demo IDs cannot receive email verification or recovery links.</p>}
     <label>Password<input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" /></label>
     <button className="primary" type="submit">{accountReady ? "Add emergency contact and continue" : "Create my private account →"}</button>
     {status && <p className="form-status" role="status">{status}</p>}

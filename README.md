@@ -32,7 +32,7 @@ BETTER_AUTH_SECRET=replace-with-a-long-random-secret
 OPENAI_API_KEY=your_openai_api_key
 ```
 
-Apply the SQL migrations in `db/migrations/` in numbered order (`0000` through `0007`), then start the app:
+Apply the SQL migrations in `db/migrations/` in numbered order (`0000` through `0008`), then start the app:
 
 ```bash
 npm run dev

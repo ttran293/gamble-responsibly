@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { Resend } from "resend";
 import { db } from "./db";
 import * as schema from "../db/schema";
+import { isDemoAccountEmail } from "./demo-email";
 
 const deployedUrl = "https://www.myjelly.club";
 const apexUrl = "https://myjelly.club";
@@ -31,6 +32,7 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
+      if (isDemoAccountEmail(user.email)) return;
       void resend.emails.send({
         from: process.env.EMAIL_FROM ?? "Jelly <onboarding@resend.dev>", to: user.email,
         subject: "Verify your Jelly email", html: `<p>Verify your email to help protect your private Jelly account.</p><p><a href="${url}">Verify my email</a></p>`

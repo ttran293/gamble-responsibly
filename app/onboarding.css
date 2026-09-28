@@ -204,9 +204,12 @@
 .emergency-contact-panel { margin: 0 0 28px; }
 .emergency-contact-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 280px); gap: 28px 36px; align-items: start; }
 .emergency-contact-panel h2 { margin: 8px 0 0; font: 600 24px/1.15 'DM Sans', Arial, sans-serif; letter-spacing: -.03em; }
+.emergency-contact-intro { min-width: 0; }
 .emergency-contact-panel > p:not(.eyebrow):not(.emergency-contact-name) { color: var(--ink-muted); line-height: 1.55; }
 .emergency-contact-layout + p { margin-top: 18px; }
 .emergency-contact-name { margin: 16px 0 0; font-size: 22px; font-weight: 600; line-height: 1.3; text-transform: capitalize; }
+.emergency-contact-email { margin: 7px 0 0; color: var(--ink-muted); font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.emergency-contact-remove { display: inline-block; margin-top: 10px; padding: 0; }
 .emergency-contact-note .jelly-message-bubble > strong { display: block; font-size: 15px; line-height: 1.3; }
 .emergency-contact-note .jelly-message-bubble > p + p { margin-top: 10px; }
 .emergency-contact-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 18px; }
