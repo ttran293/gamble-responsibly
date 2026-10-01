@@ -1,4 +1,6 @@
-# Jelly
+# Jelly:
+
+[Devpost](https://devpost.com/software/jelly-gocxz8)
 
 Jelly is a prototype for people who want to understand their gambling habits and work toward gambling less or stopping. It brings activity, spending, personal goals, and practical next steps into one private space. It also gives friends and family a way to invite someone they care about to seek support without taking control of that person's information.
 
